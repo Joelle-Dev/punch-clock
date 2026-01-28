@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="轻量级打卡记录应用">
+    <meta name="theme-color" content="#4F46E5">
+    <title>打卡记录</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    
+    <div class="container">
+        <header>
+            <h1>📅 打卡记录</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">今日打卡</span>
+                    <span class="stat-value" id="todayCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">连续打卡</span>
+                    <span class="stat-value" id="streakCount">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="type-section">
+                <div class="type-tabs">
+                    <button class="type-tab active" data-type="toilet">如厕</button>
+                    <button class="type-tab" data-type="meal">饭否</button>
+                    <button class="type-tab" data-type="fitness">健身</button>
+                    <button class="type-tab" data-type="other">其他</button>
+                </div>
+            </div>
+
+            <div class="punch-section">
+                <button id="punchBtn" class="punch-button">
+                    <span class="punch-icon">👊</span>
+                    <span class="punch-text">打卡</span>
+                </button>
+                <p class="last-punch" id="lastPunchTime">暂无打卡记录</p>
+            </div>
+
+            <div class="history-section">
+                <h2>打卡概览与历史</h2>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">全部</button>
+                    <button class="filter-tab" data-filter="today">今天</button>
+                    <button class="filter-tab" data-filter="week">本周</button>
+                    <button class="filter-tab" data-filter="month">本月</button>
+                </div>
+                <div class="history-type-tabs">
+                    <button class="history-type-tab active" data-history-type="all">全部类型</button>
+                    <button class="history-type-tab" data-history-type="toilet">如厕</button>
+                    <button class="history-type-tab" data-history-type="meal">饭否</button>
+                    <button class="history-type-tab" data-history-type="fitness">健身</button>
+                    <button class="history-type-tab" data-history-type="other">其他</button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- 打卡记录将动态插入这里 -->
+                </div>
+            </div>
+        </main>
+
+        <div class="actions">
+            <button id="exportBtn" class="action-btn">导出数据</button>
+            <button id="clearBtn" class="action-btn danger">清空记录</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-backdrop" hidden>
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">确认删除</div>
+            <div class="modal-message" id="modalMessage"></div>
+            <div class="modal-actions">
+                <button id="modalCancel" class="modal-btn">取消</button>
+                <button id="modalConfirm" class="modal-btn danger">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,19 @@
+{
+  "name": "punch-clock",
+  "version": "1.0.0",
+  "description": "轻量级打卡记录应用",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["punch", "clock", "attendance", "pwa"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-pwa": "^0.17.0"
+  }
+}
+
