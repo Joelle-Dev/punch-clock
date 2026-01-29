@@ -15,9 +15,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
     <!-- 主屏幕正方形图标（SVG 512×512） -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%234F46E5'/><text x='256' y='280' text-anchor='middle' font-size='200' fill='white'>📅</text></svg>">
-  <script type="module" crossorigin src="./assets/index-9-esJjsH.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-B1G9WgZ3.css">
-<link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="manifest" href="./manifest.webmanifest">
     <style>
         .splash-screen {
             position: fixed;
@@ -44,7 +43,8 @@
             font-size: 14px;
             color: #6B7280;
         }
-    </style></head>
+    </style>
+</head>
 <body>
     
     <div id="splash" class="splash-screen">
@@ -134,7 +134,7 @@
     </div>
 
     <script type="module" src="./app.js"></script>
-<script>
+    <script>
         // 启动页：等首帧白底渲染后再淡出，减少黑→白闪烁
         (function () {
             var splash = document.getElementById('splash');
