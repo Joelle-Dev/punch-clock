@@ -17,6 +17,7 @@ const modalTitleEl = document.getElementById('modalTitle');
 const modalMessageEl = document.getElementById('modalMessage');
 const modalCancelBtn = document.getElementById('modalCancel');
 const modalConfirmBtn = document.getElementById('modalConfirm');
+const praiseToastEl = document.getElementById('praiseToast');
 
 const STORAGE_KEY = 'punch_records_v1';
 
@@ -251,6 +252,7 @@ let state = {
 };
 
 let pendingConfirm = null;
+let praiseTimer = null;
 
 function showConfirm(options) {
   const { title, message, onConfirm } = options;
@@ -309,6 +311,23 @@ function init() {
     state.records.push(record);
     saveRecords(state.records);
     render(state.records, state.filter);
+
+    // 按钮轻微弹跳动效
+    punchBtn.classList.remove('punch-button-bounce');
+    // 强制重绘以便重复触发动画
+    // eslint-disable-next-line no-unused-expressions
+    punchBtn.offsetWidth;
+    punchBtn.classList.add('punch-button-bounce');
+
+    // 为潘秋瑾准备的小提示
+    if (praiseToastEl) {
+      praiseToastEl.textContent = '潘秋瑾真棒！';
+      praiseToastEl.classList.add('show');
+      if (praiseTimer) clearTimeout(praiseTimer);
+      praiseTimer = setTimeout(() => {
+        praiseToastEl.classList.remove('show');
+      }, 1600);
+    }
   });
 
   filterTabs.forEach((tab) => {
@@ -320,7 +339,7 @@ function init() {
     });
   });
 
-  // 历史类型页签（控制“健身/如厕/吃饭/其他/全部类型”预览）
+  // 历史类型页签（控制“健身/如厕/饭否/其他/全部类型”预览）
   historyTypeTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       historyTypeTabs.forEach((t) => t.classList.remove('active'));
