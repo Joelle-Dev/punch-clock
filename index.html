@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="轻量级打卡记录应用">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#FFFFFF">
     <!-- iOS Safari PWA 优化 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,9 +12,41 @@
     <title>打卡记录</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
     <link rel="stylesheet" href="./style.css">
+    <style>
+        .splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: opacity 0.35s ease;
+        }
+        .splash-screen.splash-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .splash-title {
+            font-size: 20px;
+            color: #4F46E5;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .splash-subtitle {
+            font-size: 14px;
+            color: #6B7280;
+        }
+    </style>
 </head>
 <body>
     
+    <div id="splash" class="splash-screen">
+        <div class="splash-title">潘秋瑾</div>
+        <div class="splash-subtitle">今天也要好好生活</div>
+    </div>
+
     <div class="container">
         <header>
             <h1>📅 打卡记录</h1>
@@ -89,6 +121,16 @@
     </div>
 
     <script type="module" src="./app.js"></script>
+    <script>
+        window.addEventListener('load', function () {
+            var splash = document.getElementById('splash');
+            if (splash) {
+                setTimeout(function () {
+                    splash.classList.add('splash-hidden');
+                }, 400);
+            }
+        });
+    </script>
 </body>
 </html>
 

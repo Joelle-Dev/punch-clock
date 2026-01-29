@@ -3,7 +3,7 @@
   "short_name": "秋瑾打卡",
   "description": "送给潘秋瑾的专属打卡小本本",
   "theme_color": "#4F46E5",
-  "background_color": "#F9FAFB",
+  "background_color": "#FFFFFF",
   "display": "standalone",
   "start_url": "/punch-clock/",
   "scope": "/punch-clock/",
