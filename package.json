@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && mkdir -p dist && touch dist/.nojekyll",
-    "build:docs": "vite build && touch dist/.nojekyll && rm -rf docs && cp -r dist docs && touch docs/.nojekyll",
+    "build:docs": "vite build && touch dist/.nojekyll && cp icon-192.png.jpg icon-512.png.jpg dist/ 2>/dev/null || true && rm -rf docs && cp -r dist docs && touch docs/.nojekyll",
     "preview": "vite preview"
   },
   "keywords": ["punch", "clock", "attendance", "pwa"],
