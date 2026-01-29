@@ -17,7 +17,9 @@ const modalTitleEl = document.getElementById('modalTitle');
 const modalMessageEl = document.getElementById('modalMessage');
 const modalCancelBtn = document.getElementById('modalCancel');
 const modalConfirmBtn = document.getElementById('modalConfirm');
-const praiseToastEl = document.getElementById('praiseToast');
+const praiseWrapEl = document.getElementById('praiseWrap');
+const praiseTextEl = document.getElementById('praiseText');
+const praiseHeartsEl = document.getElementById('praiseHearts');
 
 const STORAGE_KEY = 'punch_records_v1';
 
@@ -319,15 +321,30 @@ function init() {
     punchBtn.offsetWidth;
     punchBtn.classList.add('punch-button-bounce');
 
-    // 为潘秋瑾准备的小提示
-    if (praiseToastEl) {
-      praiseToastEl.textContent = '潘秋瑾真棒！';
-      praiseToastEl.classList.add('show');
-      if (praiseTimer) clearTimeout(praiseTimer);
-      praiseTimer = setTimeout(() => {
-        praiseToastEl.classList.remove('show');
-      }, 1600);
+    // 潘秋瑾真棒：打卡旁爱心发散
+    if (praiseTextEl) praiseTextEl.textContent = '潘秋瑾真棒！';
+    if (praiseWrapEl) praiseWrapEl.classList.add('show');
+    if (praiseHeartsEl) {
+      praiseHeartsEl.innerHTML = '';
+      const hearts = ['❤', '💜', '💗'];
+      const r = 32;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * 2 * Math.PI - Math.PI / 2;
+        const tx = Math.cos(angle) * r;
+        const ty = Math.sin(angle) * r;
+        const span = document.createElement('span');
+        span.className = 'heart-burst';
+        span.textContent = hearts[i % hearts.length];
+        span.style.setProperty('--tx', tx + 'px');
+        span.style.setProperty('--ty', ty + 'px');
+        span.style.setProperty('--delay', i * 40 + 'ms');
+        praiseHeartsEl.appendChild(span);
+      }
     }
+    if (praiseTimer) clearTimeout(praiseTimer);
+    praiseTimer = setTimeout(() => {
+      if (praiseWrapEl) praiseWrapEl.classList.remove('show');
+    }, 1800);
   });
 
   filterTabs.forEach((tab) => {
@@ -406,6 +423,8 @@ function init() {
   });
 
   exportBtn.addEventListener('click', () => {
+    const actionsMenu = document.getElementById('actionsMenu');
+    if (actionsMenu && actionsMenu.classList.contains('open')) actionsMenu.classList.remove('open');
     if (!state.records.length) {
       alert('暂无数据可导出');
       return;
@@ -432,6 +451,8 @@ function init() {
   });
 
   clearBtn.addEventListener('click', () => {
+    const actionsMenu = document.getElementById('actionsMenu');
+    if (actionsMenu && actionsMenu.classList.contains('open')) actionsMenu.classList.remove('open');
     if (!state.records.length) return;
     showConfirm({
       title: '清空所有记录',
@@ -445,5 +466,19 @@ function init() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function () {
+  init();
+  var fab = document.getElementById('actionsFabToggle');
+  var menu = document.getElementById('actionsMenu');
+  if (fab && menu) {
+    fab.addEventListener('click', function () {
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+      if (menu.classList.contains('open') && !fab.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+      }
+    });
+  }
+});
 

@@ -19,18 +19,19 @@ export default defineConfig({
         // 使用绝对路径，保证从"添加到主屏幕"启动时直接打开正确首页
         start_url: '/punch-clock/',
         scope: '/punch-clock/',
+        // 主屏幕图标请使用正方形图（如 512×512、192×192），否则会显示为长方形
         icons: [
           {
             src: './icon-192.png.jpg',
             sizes: '192x192',
             type: 'image/jpeg',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
             src: './icon-512.png.jpg',
             sizes: '512x512',
             type: 'image/jpeg',
-            purpose: 'any maskable'
+            purpose: 'any'
           }
         ]
       },
