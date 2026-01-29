@@ -1,1 +1,1 @@
-{"name":"打卡记录","short_name":"打卡","start_url":"./index.html","display":"standalone","background_color":"#ffffff","lang":"en","scope":"./","description":"轻量级打卡记录应用","theme_color":"#4F46E5","icons":[]}
+{"name":"打卡记录","short_name":"打卡","start_url":"/punch-clock/","display":"standalone","background_color":"#ffffff","lang":"en","scope":"/punch-clock/","description":"轻量级打卡记录应用","theme_color":"#4F46E5","icons":[]}

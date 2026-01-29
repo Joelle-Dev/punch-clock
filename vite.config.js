@@ -12,8 +12,10 @@ export default defineConfig({
         short_name: '打卡',
         description: '轻量级打卡记录应用',
         theme_color: '#4F46E5',
-        start_url: './index.html',
-        scope: './',
+        // GitHub Pages 上项目路径是 /punch-clock/
+        // start_url 和 scope 使用绝对路径，保证从“添加到主屏幕”启动时不会指向错误的 /assets/... 路径
+        start_url: '/punch-clock/',
+        scope: '/punch-clock/',
         icons: [] // 暂时为空，等有图标文件后再添加
       },
       workbox: {
