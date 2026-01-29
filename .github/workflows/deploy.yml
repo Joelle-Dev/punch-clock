@@ -1,9 +1,15 @@
 name: Deploy to GitHub Pages
 
+# 已禁用：当前使用分支部署（从 /docs 目录）
+# 如需启用 GitHub Actions 部署，请：
+# 1. 在 GitHub Pages 设置中将 Source 改为 "GitHub Actions"
+# 2. 取消下面的注释
+# on:
+#   push:
+#     branches:
+#       - master
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:  # 仅手动触发，避免与分支部署冲突
 
 permissions:
   contents: read
