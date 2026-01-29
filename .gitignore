@@ -6,6 +6,7 @@ package-lock.json
 
 # Build output
 dist/
+# docs/  # 允许 docs 目录被提交（用于 GitHub Pages 分支部署）
 
 # IDE
 .vscode/
