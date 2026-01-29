@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="轻量级打卡记录应用">
     <meta name="theme-color" content="#FFFFFF">
-    <!-- iOS Safari PWA 优化，避免黑屏 -->
+    <!-- 首屏白底，减少黑屏 -->
+    <style>html,body{background:#fff !important;}</style>
+    <!-- iOS Safari PWA 优化：正方形图标 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="秋瑾打卡">
     <title>打卡记录</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
+    <!-- 主屏幕正方形图标（SVG 512×512） -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%234F46E5'/><text x='256' y='280' text-anchor='middle' font-size='200' fill='white'>📅</text></svg>">
   <script type="module" crossorigin src="./assets/index-9-esJjsH.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-B1G9WgZ3.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script>
@@ -75,6 +79,10 @@
             </div>
 
             <div class="punch-section">
+                <div class="praise-wrap" id="praiseWrap" aria-live="polite">
+                    <span class="praise-text" id="praiseText"></span>
+                    <span class="praise-hearts" id="praiseHearts"></span>
+                </div>
                 <button id="punchBtn" class="punch-button">
                     <span class="punch-icon">👊</span>
                     <span class="punch-text">打卡</span>
@@ -103,11 +111,15 @@
             </div>
         </main>
 
-        <div class="actions">
-            <button id="exportBtn" class="action-btn">导出数据</button>
-            <button id="clearBtn" class="action-btn danger">清空记录</button>
+        <div class="actions-fab" id="actionsFab">
+            <div class="actions-menu" id="actionsMenu">
+                <button id="exportBtn" class="action-btn">导出数据</button>
+                <button id="clearBtn" class="action-btn danger">清空记录</button>
+            </div>
+            <button type="button" class="actions-fab-toggle" id="actionsFabToggle" aria-label="更多操作">
+                <span class="fab-icon">⋯</span>
+            </button>
         </div>
-        <div id="praiseToast" class="praise-toast" aria-live="polite"></div>
     </div>
 
     <div id="confirmModal" class="modal-backdrop" hidden>
@@ -121,15 +133,24 @@
         </div>
     </div>
 
+    <script type="module" src="./app.js"></script>
 <script>
-        window.addEventListener('load', function () {
+        // 启动页：等首帧白底渲染后再淡出，减少黑→白闪烁
+        (function () {
             var splash = document.getElementById('splash');
-            if (splash) {
+            if (!splash) return;
+            var hide = function () {
+                splash.classList.add('splash-hidden');
                 setTimeout(function () {
-                    splash.classList.add('splash-hidden');
+                    splash.style.display = 'none';
                 }, 400);
+            };
+            if (document.readyState === 'complete') {
+                setTimeout(hide, 500);
+            } else {
+                window.addEventListener('load', function () { setTimeout(hide, 500); });
             }
-        });
+        })();
     </script>
 </body>
 </html>
