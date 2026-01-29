@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && touch dist/.nojekyll",
+    "build": "vite build && mkdir -p dist && touch dist/.nojekyll",
     "build:docs": "vite build && touch dist/.nojekyll && rm -rf docs && cp -r dist docs && touch docs/.nojekyll",
     "preview": "vite preview"
   },

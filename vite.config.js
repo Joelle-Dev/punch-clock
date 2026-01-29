@@ -13,21 +13,24 @@ export default defineConfig({
         short_name: '秋瑾打卡',
         description: '送给潘秋瑾的专属打卡小本本',
         theme_color: '#4F46E5',
-        background_color: '#F9FAFB',
+        background_color: '#F9FAFB', // 淡灰背景，避免黑屏
+        display: 'standalone',
         // GitHub Pages 上项目路径是 /punch-clock/
-        // 使用绝对路径，保证从“添加到主屏幕”启动时直接打开正确首页
+        // 使用绝对路径，保证从"添加到主屏幕"启动时直接打开正确首页
         start_url: '/punch-clock/',
         scope: '/punch-clock/',
         icons: [
           {
-            src: 'icon-192.png.jpg',
+            src: './icon-192.png.jpg',
             sizes: '192x192',
-            type: 'image/jpeg'
+            type: 'image/jpeg',
+            purpose: 'any maskable'
           },
           {
-            src: 'icon-512.png.jpg',
+            src: './icon-512.png.jpg',
             sizes: '512x512',
-            type: 'image/jpeg'
+            type: 'image/jpeg',
+            purpose: 'any maskable'
           }
         ]
       },
@@ -41,4 +44,3 @@ export default defineConfig({
     open: true
   }
 });
-
