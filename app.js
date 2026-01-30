@@ -22,6 +22,7 @@ const praiseTextEl = document.getElementById('praiseText');
 const praiseHeartsEl = document.getElementById('praiseHearts');
 
 const STORAGE_KEY = 'punch_records_v1';
+const PERIOD_STORAGE_KEY = 'punch_period_records_v1';
 
 function loadRecords() {
   try {
@@ -251,6 +252,8 @@ let state = {
   filter: 'all',
   currentType: 'fitness',
   historyType: 'all',
+  periodRecords: [],
+  activeTab: 'punch',
 };
 
 let pendingConfirm = null;
@@ -283,8 +286,130 @@ function filterByType(records, type) {
   return records.filter((r) => (r.type || 'other') === type);
 }
 
+// ---------- 姨妈打卡 ----------
+function loadPeriodRecords() {
+  try {
+    const raw = localStorage.getItem(PERIOD_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch (e) {
+    console.error('Failed to load period records', e);
+    return [];
+  }
+}
+
+function savePeriodRecords(records) {
+  localStorage.setItem(PERIOD_STORAGE_KEY, JSON.stringify(records));
+}
+
+/** 找到当前未结束的经期（最近一次没有 endDate 的） */
+function getCurrentOpenPeriod(periodRecords) {
+  return periodRecords
+    .filter((r) => !r.endDate)
+    .sort((a, b) => (b.startDate > a.startDate ? 1 : -1))[0] || null;
+}
+
+/** 根据历史开始日预测下次开始日。至少 2 次开始日才预测 */
+function calcNextPeriodStart(periodRecords) {
+  const withStart = periodRecords
+    .map((r) => r.startDate)
+    .filter(Boolean)
+    .sort();
+  if (withStart.length < 2) return null;
+  const cycles = [];
+  for (let i = 1; i < withStart.length; i++) {
+    const a = new Date(withStart[i - 1]);
+    const b = new Date(withStart[i]);
+    const days = Math.round((b - a) / (24 * 60 * 60 * 1000));
+    if (days > 0 && days < 90) cycles.push(days);
+  }
+  if (!cycles.length) return null;
+  const avgCycle = Math.round(
+    cycles.reduce((s, d) => s + d, 0) / cycles.length
+  );
+  const lastStart = withStart[withStart.length - 1];
+  const next = new Date(lastStart);
+  next.setDate(next.getDate() + avgCycle);
+  return { dateKey: getDateKey(next), avgCycle };
+}
+
+function renderPeriodPanel() {
+  const statusEl = document.getElementById('periodStatus');
+  const predictionEl = document.getElementById('periodPrediction');
+  const historyListEl = document.getElementById('periodHistoryList');
+  const periodStartBtn = document.getElementById('periodStartBtn');
+  const periodEndBtn = document.getElementById('periodEndBtn');
+  if (!statusEl || !predictionEl || !historyListEl) return;
+
+  const periods = state.periodRecords;
+  const open = getCurrentOpenPeriod(periods);
+  const todayKey = getDateKey(new Date());
+
+  if (open) {
+    statusEl.innerHTML = `
+      <div class="period-status-title">进行中</div>
+      <div>开始：${formatDateDisplay(open.startDate)}</div>
+      <div>结束：尚未记录</div>
+    `;
+    if (periodEndBtn) periodEndBtn.disabled = false;
+    if (periodStartBtn) periodStartBtn.disabled = true;
+  } else {
+    statusEl.innerHTML = `
+      <div class="period-status-title">未在经期</div>
+      <div>记录「来的第一天」开始新周期</div>
+    `;
+    if (periodEndBtn) periodEndBtn.disabled = true;
+    if (periodStartBtn) periodStartBtn.disabled = false;
+  }
+
+  const pred = calcNextPeriodStart(periods);
+  if (pred) {
+    predictionEl.innerHTML = `
+      <div class="period-prediction-title">预计下次开始</div>
+      <div class="period-prediction-value">${formatDateDisplay(pred.dateKey)}</div>
+      <div class="period-prediction-hint">基于平均周期 ${pred.avgCycle} 天，仅供参考</div>
+    `;
+    predictionEl.hidden = false;
+  } else {
+    predictionEl.innerHTML = `
+      <div class="period-prediction-title">预测</div>
+      <div class="period-prediction-hint">再记录至少 2 次「来的第一天」后会显示预测</div>
+    `;
+    predictionEl.hidden = false;
+  }
+
+  const sorted = [...periods].sort((a, b) => (b.startDate > a.startDate ? 1 : -1));
+  if (!sorted.length) {
+    historyListEl.innerHTML = '<div class="period-empty">暂无经期记录</div>';
+    return;
+  }
+  historyListEl.innerHTML = '';
+  sorted.forEach((p) => {
+    const row = document.createElement('div');
+    row.className = 'period-history-item';
+    const range =
+      p.endDate
+        ? `${formatDateDisplay(p.startDate)} ～ ${formatDateDisplay(p.endDate)}`
+        : `${formatDateDisplay(p.startDate)} ～ 进行中`;
+    const days = p.endDate
+      ? Math.round(
+          (new Date(p.endDate) - new Date(p.startDate)) / (24 * 60 * 60 * 1000)
+        ) + 1
+      : '';
+    row.innerHTML = `
+      <span class="period-range">${range}</span>
+      <span class="period-days">${days ? days + ' 天' : ''}</span>
+      <button type="button" class="period-history-delete" data-period-id="${p.id}">删</button>
+    `;
+    historyListEl.appendChild(row);
+  });
+}
+
 function init() {
   state.records = loadRecords();
+  state.periodRecords = loadPeriodRecords();
   // 类型 tab 事件（只影响“打卡”归属类型）
   typeTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -464,10 +589,88 @@ function init() {
       },
     });
   });
+
+  // 姨妈打卡：来的第一天
+  const periodStartBtn = document.getElementById('periodStartBtn');
+  if (periodStartBtn) {
+    periodStartBtn.addEventListener('click', () => {
+      const open = getCurrentOpenPeriod(state.periodRecords);
+      const todayKey = getDateKey(new Date());
+      if (open) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = getDateKey(yesterday);
+        showConfirm({
+          title: '开始新周期',
+          message: '当前有一周期未结束，将把上一周期结束日设为昨天，再记录本次开始。确定？',
+          onConfirm: () => {
+            open.endDate = yesterdayKey;
+            const newPeriod = {
+              id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              startDate: todayKey,
+              endDate: null,
+            };
+            state.periodRecords.push(newPeriod);
+            savePeriodRecords(state.periodRecords);
+            renderPeriodPanel();
+          },
+        });
+      } else {
+        const newPeriod = {
+          id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          startDate: todayKey,
+          endDate: null,
+        };
+        state.periodRecords.push(newPeriod);
+        savePeriodRecords(state.periodRecords);
+        renderPeriodPanel();
+      }
+    });
+  }
+
+  // 姨妈打卡：结束了
+  const periodEndBtn = document.getElementById('periodEndBtn');
+  if (periodEndBtn) {
+    periodEndBtn.addEventListener('click', () => {
+      const open = getCurrentOpenPeriod(state.periodRecords);
+      if (!open) return;
+      const todayKey = getDateKey(new Date());
+      open.endDate = todayKey;
+      savePeriodRecords(state.periodRecords);
+      renderPeriodPanel();
+    });
+  }
+
+  // 姨妈历史删除
+  const periodHistoryList = document.getElementById('periodHistoryList');
+  if (periodHistoryList) {
+    periodHistoryList.addEventListener('click', (e) => {
+      const btn = e.target;
+      if (!btn.classList.contains('period-history-delete')) return;
+      const id = btn.getAttribute('data-period-id');
+      if (!id) return;
+      const p = state.periodRecords.find((r) => r.id === id);
+      if (!p) return;
+      const range = p.endDate
+        ? `${formatDateDisplay(p.startDate)} ～ ${formatDateDisplay(p.endDate)}`
+        : formatDateDisplay(p.startDate) + ' ～ 进行中';
+      showConfirm({
+        title: '删除经期记录',
+        message: `确定删除「${range}」这条记录吗？此操作不可恢复。`,
+        onConfirm: () => {
+          state.periodRecords = state.periodRecords.filter((r) => r.id !== id);
+          savePeriodRecords(state.periodRecords);
+          renderPeriodPanel();
+        },
+      });
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
   init();
+  renderPeriodPanel();
+
   var fab = document.getElementById('actionsFabToggle');
   var menu = document.getElementById('actionsMenu');
   if (fab && menu) {
@@ -480,5 +683,53 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // 底部 Tab 切换
+  var panelPunch = document.getElementById('panelPunch');
+  var panelPeriod = document.getElementById('panelPeriod');
+  var tabItems = document.querySelectorAll('.tab-bar-item');
+  var actionsFab = document.getElementById('actionsFab');
+
+  function switchTab(tab) {
+    state.activeTab = tab;
+    if (tab === 'punch') {
+      if (panelPunch) {
+        panelPunch.classList.add('active');
+        panelPunch.removeAttribute('hidden');
+      }
+      if (panelPeriod) {
+        panelPeriod.classList.remove('active');
+        panelPeriod.hidden = true;
+      }
+      if (actionsFab) actionsFab.classList.remove('tab-period-hidden');
+    } else {
+      if (panelPunch) {
+        panelPunch.classList.remove('active');
+        panelPunch.hidden = true;
+      }
+      if (panelPeriod) {
+        panelPeriod.classList.add('active');
+        panelPeriod.removeAttribute('hidden');
+      }
+      if (actionsFab) actionsFab.classList.add('tab-period-hidden');
+      renderPeriodPanel();
+    }
+    tabItems.forEach(function (item) {
+      if (item.getAttribute('data-tab') === tab) {
+        item.classList.add('active');
+        item.setAttribute('aria-selected', 'true');
+      } else {
+        item.classList.remove('active');
+        item.setAttribute('aria-selected', 'false');
+      }
+    });
+  }
+
+  tabItems.forEach(function (item) {
+    item.addEventListener('click', function () {
+      var tab = item.getAttribute('data-tab');
+      if (tab) switchTab(tab);
+    });
+  });
 });
 
