@@ -23,6 +23,29 @@ const praiseHeartsEl = document.getElementById('praiseHearts');
 
 const STORAGE_KEY = 'punch_records_v1';
 const PERIOD_STORAGE_KEY = 'punch_period_records_v1';
+const THEME_STORAGE_KEY = 'punch_theme_v1';
+const ACHIEVEMENT_STORAGE_KEY = 'punch_achievements_v1';
+
+// 成就配置：id, title, desc, icon, check(records)->boolean
+const ACHIEVEMENTS = [
+  { id: 'streak7', title: '连续 7 天', desc: '连续打卡满 7 天', icon: '🔥', check: (records) => calcStreak(records) >= 7 },
+  { id: 'toilet30', title: '如厕达人', desc: '如厕打卡满 30 次', icon: '🚽', check: (records) => filterByType(records, 'toilet').length >= 30 },
+  { id: 'meal30', title: '饭否达人', desc: '饭否打卡满 30 次', icon: '🍚', check: (records) => filterByType(records, 'meal').length >= 30 },
+  { id: 'fitness30', title: '健身达人', desc: '健身打卡满 30 次', icon: '💪', check: (records) => filterByType(records, 'fitness').length >= 30 },
+  { id: 'days100', title: '坚持 100 天', desc: '使用打卡满 100 天', icon: '📅', check: (records) => {
+    if (!records.length) return false;
+    const first = records.slice().sort((a, b) => a.timestamp - b.timestamp)[0];
+    const days = Math.floor((Date.now() - first.timestamp) / (24 * 60 * 60 * 1000));
+    return days >= 100;
+  }},
+  { id: 'all4', title: '全能日', desc: '同一天打过全部 4 种类型', icon: '🌟', check: (records) => {
+    const byDate = groupByDate(records);
+    return byDate.some(({ recs }) => {
+      const types = new Set(recs.map((r) => r.type || 'other'));
+      return types.size >= 4;
+    });
+  }},
+];
 
 function loadRecords() {
   try {
@@ -71,6 +94,102 @@ function formatDateDisplay(dateKey) {
   return `${year}年${Number(month)}月${Number(day)}日`;
 }
 
+// 解析 CSV 行（支持引号包裹）
+function parseCsvLine(line) {
+  const cells = [];
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] === '"') {
+      let cell = '';
+      i++;
+      while (i < line.length && (line[i] !== '"' || line[i + 1] === '"')) {
+        cell += line[i] === '"' && line[i + 1] === '"' ? '"' : line[i];
+        i++;
+      }
+      if (line[i] === '"') i++;
+      cells.push(cell);
+      if (line[i] === ',') i++;
+    } else {
+      const end = line.indexOf(',', i);
+      const cell = end === -1 ? line.slice(i) : line.slice(i, end);
+      cells.push(cell.trim());
+      i = end === -1 ? line.length : end + 1;
+    }
+  }
+  return cells;
+}
+
+// 类型中文 -> 内部 key
+function getTypeFromLabel(label) {
+  const map = { 如厕: 'toilet', 饭否: 'meal', 健身: 'fitness', 其他: 'other' };
+  return map[label] || 'other';
+}
+
+// 解析「2025年1月28日 14:30:00」或「2025年1月28日」
+function parseDateTimeDisplay(str) {
+  const dateMatch = /(\d+)年(\d+)月(\d+)日/.exec(str);
+  if (!dateMatch) return null;
+  const [, y, m, d] = dateMatch;
+  const dateKey = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const timeMatch = /(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/.exec(str);
+  const h = timeMatch ? parseInt(timeMatch[1], 10) : 12;
+  const min = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+  const sec = timeMatch && timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+  const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), h, min, sec);
+  return { dateKey, timestamp: date.getTime() };
+}
+
+function parseDateDisplay(str) {
+  const m = /(\d+)年(\d+)月(\d+)日/.exec(str);
+  if (!m) return null;
+  return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+}
+
+// 解析打卡导出 CSV，返回 [{ id, timestamp, dateKey, type }]
+function parsePunchCsv(text) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  const records = [];
+  for (let i = 0; i < lines.length; i++) {
+    const cells = parseCsvLine(lines[i]);
+    if (cells.length < 2) continue;
+    const typeLabel = cells[0].trim();
+    const dateTimeStr = cells[1].trim();
+    if (i === 0 && (typeLabel === '类型' || typeLabel === '日期时间')) continue;
+    const type = getTypeFromLabel(typeLabel);
+    const parsed = parseDateTimeDisplay(dateTimeStr);
+    if (!parsed) continue;
+    records.push({
+      id: `import-${parsed.timestamp}-${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: parsed.timestamp,
+      dateKey: parsed.dateKey,
+      type,
+    });
+  }
+  return records;
+}
+
+// 解析经期导出 CSV，返回 [{ id, startDate, endDate }]
+function parsePeriodCsv(text) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  const records = [];
+  for (let i = 0; i < lines.length; i++) {
+    const cells = parseCsvLine(lines[i]);
+    if (cells.length < 2) continue;
+    const startStr = cells[0].trim();
+    const endStr = cells[1].trim();
+    if (i === 0 && (startStr === '开始日期' || endStr === '结束日期')) continue;
+    const startDate = parseDateDisplay(startStr);
+    if (!startDate) continue;
+    const endDate = endStr === '进行中' || !endStr ? null : parseDateDisplay(endStr);
+    records.push({
+      id: `p-import-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+      startDate,
+      endDate: endDate || null,
+    });
+  }
+  return records;
+}
+
 function calcTodayCount(records) {
   const todayKey = getDateKey(new Date());
   return records.filter((r) => r.dateKey === todayKey).length;
@@ -108,6 +227,163 @@ function getTypeLabel(type) {
       return '饭否';
     default:
       return '其他';
+  }
+}
+
+// ---------- 主题颜色 ----------
+function getStoredTheme() {
+  try {
+    const hex = localStorage.getItem(THEME_STORAGE_KEY);
+    if (hex && /^#[0-9A-Fa-f]{6}$/.test(hex)) return hex;
+  } catch (e) {
+    console.error('Failed to load theme', e);
+  }
+  return null;
+}
+
+function saveTheme(hex) {
+  if (hex) localStorage.setItem(THEME_STORAGE_KEY, hex);
+  else localStorage.removeItem(THEME_STORAGE_KEY);
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function darkenHex(hex, ratio) {
+  const { r, g, b } = hexToRgb(hex);
+  return '#' + [r, g, b]
+    .map((c) => Math.round(Math.max(0, c * (1 - ratio))).toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function applyCustomTheme(hex) {
+  const root = document.documentElement;
+  root.classList.forEach((c) => {
+    if (c.startsWith('theme-day-')) root.classList.remove(c);
+  });
+  root.style.setProperty('--primary', hex);
+  root.style.setProperty('--primary-dark', darkenHex(hex, 0.15));
+  const { r, g, b } = hexToRgb(hex);
+  root.style.setProperty('--primary-soft', `rgba(${r}, ${g}, ${b}, 0.15)`);
+}
+
+function applyDayTheme() {
+  const root = document.documentElement;
+  root.style.removeProperty('--primary');
+  root.style.removeProperty('--primary-dark');
+  root.style.removeProperty('--primary-soft');
+  root.classList.forEach((c) => {
+    if (c.startsWith('theme-day-')) root.classList.remove(c);
+  });
+  const d = new Date().getDay();
+  root.classList.add('theme-day-' + d);
+}
+
+function initTheme() {
+  const custom = getStoredTheme();
+  if (custom) applyCustomTheme(custom);
+  else applyDayTheme();
+}
+
+// ---------- 成就 ----------
+function loadUnlockedAchievements() {
+  try {
+    const raw = localStorage.getItem(ACHIEVEMENT_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveUnlockedAchievements(ids) {
+  localStorage.setItem(ACHIEVEMENT_STORAGE_KEY, JSON.stringify(ids));
+}
+
+function checkAllAchievements(records) {
+  const unlocked = loadUnlockedAchievements();
+  const newly = [];
+  ACHIEVEMENTS.forEach((a) => {
+    if (unlocked.includes(a.id)) return;
+    if (a.check(records)) {
+      newly.push(a);
+      unlocked.push(a.id);
+    }
+  });
+  if (newly.length) saveUnlockedAchievements(unlocked);
+  return newly;
+}
+
+function showAchievementToast(achievement) {
+  const el = document.getElementById('achievementToast');
+  if (!el) return;
+  const titleEl = el.querySelector('.achievement-toast-title');
+  const iconEl = el.querySelector('.achievement-toast-icon');
+  if (titleEl) titleEl.textContent = '恭喜！' + achievement.title;
+  if (iconEl) iconEl.textContent = achievement.icon;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ---------- 热力图 ----------
+function getMonthHeatmap(records, year, month) {
+  const prefix = `${year}-${String(month).padStart(2, '0')}`;
+  const map = {};
+  records.forEach((r) => {
+    if (!r.dateKey.startsWith(prefix)) return;
+    map[r.dateKey] = (map[r.dateKey] || 0) + 1;
+  });
+  return map;
+}
+
+function renderHeatmap(containerEl, records) {
+  if (!containerEl) return;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const heat = getMonthHeatmap(records, year, month);
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month - 1 + 1, 0);
+  const totalDays = lastDay.getDate();
+  const startWeekday = firstDay.getDay();
+
+  let html = '<div class="heatmap-grid">';
+  const weekLabels = ['日', '一', '二', '三', '四', '五', '六'];
+  weekLabels.forEach((w) => {
+    html += '<span class="heatmap-week-label">' + w + '</span>';
+  });
+  for (let i = 0; i < startWeekday; i++) {
+    html += '<span class="heatmap-cell heatmap-cell-empty"></span>';
+  }
+  for (let d = 1; d <= totalDays; d++) {
+    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const count = heat[dateKey] || 0;
+    let level = 'heatmap-cell-0';
+    if (count >= 6) level = 'heatmap-cell-4';
+    else if (count >= 4) level = 'heatmap-cell-3';
+    else if (count >= 2) level = 'heatmap-cell-2';
+    else if (count >= 1) level = 'heatmap-cell-1';
+    const title = count ? `${dateKey} 打卡 ${count} 次` : dateKey;
+    html += '<span class="heatmap-cell ' + level + '" title="' + title + '">' + (count || '') + '</span>';
+  }
+  html += '</div>';
+  containerEl.innerHTML = html;
+}
+
+// 根据打卡类型返回表扬文案
+function getPraiseMessage(type) {
+  switch (type) {
+    case 'toilet':
+      return '秋瑾又拉粑粑啦～';
+    case 'meal':
+      return '秋瑾真乖，吃饭香香～';
+    case 'fitness':
+      return '秋瑾威武，茁壮成长～';
+    default:
+      return '秋瑾真棒～';
   }
 }
 
@@ -245,6 +521,13 @@ function render(allRecords, activeFilter = 'all') {
   });
 
   historyListEl.appendChild(frag);
+
+  // 本月打卡热力图
+  renderHeatmap(document.getElementById('heatmapContainer'), state.records);
+
+  // 成就数量
+  const achievementCountEl = document.getElementById('achievementCount');
+  if (achievementCountEl) achievementCountEl.textContent = String(loadUnlockedAchievements().length);
 }
 
 let state = {
@@ -426,6 +709,7 @@ function init() {
   }
 
   render(state.records, state.filter);
+  checkAllAchievements(state.records);
 
   punchBtn.addEventListener('click', () => {
     const now = new Date();
@@ -446,8 +730,8 @@ function init() {
     punchBtn.offsetWidth;
     punchBtn.classList.add('punch-button-bounce');
 
-    // 潘秋瑾真棒：打卡旁爱心发散
-    if (praiseTextEl) praiseTextEl.textContent = '潘秋瑾真棒！';
+    // 按类型显示不同表扬文案 + 爱心发散
+    if (praiseTextEl) praiseTextEl.textContent = getPraiseMessage(state.currentType);
     if (praiseWrapEl) praiseWrapEl.classList.add('show');
     if (praiseHeartsEl) {
       praiseHeartsEl.innerHTML = '';
@@ -470,7 +754,45 @@ function init() {
     praiseTimer = setTimeout(() => {
       if (praiseWrapEl) praiseWrapEl.classList.remove('show');
     }, 1800);
+
+    // 成就检测
+    const newly = checkAllAchievements(state.records);
+    newly.forEach((a) => showAchievementToast(a));
   });
+
+  // 成就入口点击
+  const achievementBtn = document.getElementById('achievementBtn');
+  const achievementModal = document.getElementById('achievementModal');
+  if (achievementBtn && achievementModal) {
+    achievementBtn.addEventListener('click', () => {
+      const listEl = document.getElementById('achievementList');
+      if (listEl) {
+        const unlocked = loadUnlockedAchievements();
+        listEl.innerHTML = ACHIEVEMENTS.map((a) => {
+          const done = unlocked.includes(a.id);
+          return (
+            '<div class="achievement-item ' + (done ? 'unlocked' : 'locked') + '">' +
+            '<span class="achievement-icon">' + a.icon + '</span>' +
+            '<div class="achievement-info">' +
+            '<span class="achievement-title">' + a.title + '</span>' +
+            '<span class="achievement-desc">' + a.desc + '</span>' +
+            '</div>' +
+            '</div>'
+          );
+        }).join('');
+      }
+      achievementModal.hidden = false;
+    });
+  }
+  const achievementModalClose = document.getElementById('achievementModalClose');
+  if (achievementModalClose && achievementModal) {
+    achievementModalClose.addEventListener('click', () => { achievementModal.hidden = true; });
+  }
+  if (achievementModal) {
+    achievementModal.addEventListener('click', (e) => {
+      if (e.target === achievementModal) achievementModal.hidden = true;
+    });
+  }
 
   filterTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -554,13 +876,14 @@ function init() {
       alert('暂无数据可导出');
       return;
     }
-    const header = ['类型', '日期', '时间', '时间戳'];
+    const header = ['类型', '日期时间'];
     const rows = state.records
       .slice()
       .sort((a, b) => a.timestamp - b.timestamp)
       .map((r) => {
         const d = new Date(r.timestamp);
-        return [r.type || 'other', r.dateKey, formatTime(d), String(r.timestamp)];
+        const dateTime = `${formatDateDisplay(r.dateKey)} ${formatTime(d)}`;
+        return [getTypeLabel(r.type || 'other'), dateTime];
       });
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => `"${cell}"`).join(','))
@@ -574,6 +897,41 @@ function init() {
     a.click();
     URL.revokeObjectURL(url);
   });
+
+  const importBtn = document.getElementById('importBtn');
+  const punchFileInput = document.getElementById('punchFileInput');
+  if (importBtn && punchFileInput) {
+    importBtn.addEventListener('click', () => {
+      const actionsMenu = document.getElementById('actionsMenu');
+      if (actionsMenu && actionsMenu.classList.contains('open')) actionsMenu.classList.remove('open');
+      punchFileInput.value = '';
+      punchFileInput.click();
+    });
+    punchFileInput.addEventListener('change', () => {
+      const file = punchFileInput.files && punchFileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          let text = typeof reader.result === 'string' ? reader.result : '';
+          text = text.replace(/^\uFEFF/, '');
+          const parsed = parsePunchCsv(text);
+          if (!parsed.length) {
+            alert('未解析到有效打卡数据，请确认 CSV 格式为：类型、日期时间');
+            return;
+          }
+          state.records = state.records.concat(parsed);
+          state.records.sort((a, b) => a.timestamp - b.timestamp);
+          saveRecords(state.records);
+          render(state.records, state.filter);
+          alert('已导入 ' + parsed.length + ' 条打卡记录');
+        } catch (e) {
+          alert('解析失败：' + (e.message || '请确认文件为本应用导出的 CSV'));
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+  }
 
   clearBtn.addEventListener('click', () => {
     const actionsMenu = document.getElementById('actionsMenu');
@@ -665,11 +1023,129 @@ function init() {
       });
     });
   }
+
+  // 姨妈打卡：导出数据
+  const periodExportBtn = document.getElementById('periodExportBtn');
+  if (periodExportBtn) {
+    periodExportBtn.addEventListener('click', () => {
+      if (!state.periodRecords.length) {
+        alert('暂无经期数据可导出');
+        return;
+      }
+      const header = ['开始日期', '结束日期', '天数'];
+      const rows = [...state.periodRecords]
+        .sort((a, b) => (b.startDate > a.startDate ? 1 : -1))
+        .map((p) => {
+          const endDisplay = p.endDate ? formatDateDisplay(p.endDate) : '进行中';
+          const days = p.endDate
+            ? String(
+                Math.round(
+                  (new Date(p.endDate) - new Date(p.startDate)) /
+                    (24 * 60 * 60 * 1000)
+                ) + 1
+              )
+            : '-';
+          return [formatDateDisplay(p.startDate), endDisplay, days];
+        });
+      const csv = [header, ...rows]
+        .map((row) => row.map((cell) => `"${cell}"`).join(','))
+        .join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `经期记录-${getDateKey(new Date())}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  const periodImportBtn = document.getElementById('periodImportBtn');
+  const periodFileInput = document.getElementById('periodFileInput');
+  if (periodImportBtn && periodFileInput) {
+    periodImportBtn.addEventListener('click', () => {
+      periodFileInput.value = '';
+      periodFileInput.click();
+    });
+    periodFileInput.addEventListener('change', () => {
+      const file = periodFileInput.files && periodFileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          let text = typeof reader.result === 'string' ? reader.result : '';
+          text = text.replace(/^\uFEFF/, '');
+          const parsed = parsePeriodCsv(text);
+          if (!parsed.length) {
+            alert('未解析到有效经期数据，请确认 CSV 格式为：开始日期、结束日期、天数');
+            return;
+          }
+          state.periodRecords = state.periodRecords.concat(parsed);
+          state.periodRecords.sort((a, b) => (b.startDate > a.startDate ? 1 : -1));
+          savePeriodRecords(state.periodRecords);
+          renderPeriodPanel();
+          alert('已导入 ' + parsed.length + ' 条经期记录');
+        } catch (e) {
+          alert('解析失败：' + (e.message || '请确认文件为本应用导出的经期 CSV'));
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  initTheme();
   init();
   renderPeriodPanel();
+
+  // 主题弹窗
+  var themeBtn = document.getElementById('themeBtn');
+  var themeModal = document.getElementById('themeModal');
+  var themeModalClose = document.getElementById('themeModalClose');
+  var themeColorInput = document.getElementById('themeColorInput');
+  var themeResetBtn = document.getElementById('themeResetBtn');
+  var themeHelpBtn = document.getElementById('themeHelpBtn');
+  var themeHelpBlock = document.getElementById('themeHelpBlock');
+
+  function openThemeModal() {
+    var custom = getStoredTheme();
+    if (custom) themeColorInput.value = custom;
+    else themeColorInput.value = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6B7FD7';
+    themeHelpBlock.hidden = true;
+    themeModal.hidden = false;
+  }
+
+  function closeThemeModal() {
+    themeModal.hidden = true;
+  }
+
+  if (themeBtn) themeBtn.addEventListener('click', openThemeModal);
+  if (themeModalClose) themeModalClose.addEventListener('click', closeThemeModal);
+  if (themeModal) {
+    themeModal.addEventListener('click', function (e) {
+      if (e.target === themeModal) closeThemeModal();
+    });
+  }
+  if (themeColorInput) {
+    themeColorInput.addEventListener('input', function () {
+      var hex = themeColorInput.value;
+      saveTheme(hex);
+      applyCustomTheme(hex);
+    });
+  }
+  if (themeResetBtn) {
+    themeResetBtn.addEventListener('click', function () {
+      saveTheme(null);
+      applyDayTheme();
+      closeThemeModal();
+    });
+  }
+  if (themeHelpBtn && themeHelpBlock) {
+    themeHelpBtn.addEventListener('click', function () {
+      themeHelpBlock.hidden = !themeHelpBlock.hidden;
+    });
+  }
 
   var fab = document.getElementById('actionsFabToggle');
   var menu = document.getElementById('actionsMenu');

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script>(function(){var d=new Date().getDay();document.documentElement.classList.add('theme-day-'+d);})();</script>
     <meta name="description" content="轻量级打卡记录应用">
     <meta name="theme-color" content="#FFFFFF">
     <!-- 首屏白底，减少黑屏 -->
@@ -43,27 +44,26 @@
             color: #6B7280;
         }
     </style>
-  <script type="module" crossorigin src="./assets/index-CAcHL_wA.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CJ4R_Qd7.css">
+  <script type="module" crossorigin src="./assets/index-Bcc5tnof.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DQrGaV_o.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
     
     <div id="splash" class="splash-screen">
         <div class="splash-title">潘秋瑾</div>
-        <div class="splash-subtitle">今天也要好好生活</div>
+        <div class="splash-subtitle">奥利给</div>
     </div>
 
     <div class="app-shell">
-        <header class="top-banner" aria-hidden="true">
-            <span class="top-banner-text">秋瑾，你今天真好看 ✨</span>
+        <header class="top-banner">
+            <span class="top-banner-text">潘秋瑾，你今天真好看 ✨</span>
+            <button type="button" class="top-banner-theme-btn" id="themeBtn" aria-label="主题颜色">
+                <span class="top-banner-theme-icon" aria-hidden="true">🎨</span>
+            </button>
         </header>
         <!-- 日常打卡面板 -->
         <div id="panelPunch" class="tab-panel active">
         <header class="app-header">
-            <div class="header-inner">
-                <h1 class="app-title">打卡记录</h1>
-                <p class="app-subtitle"><span class="highlight-name">潘秋瑾</span> 的专属小本本</p>
-            </div>
             <div class="stats-row">
                 <div class="stat-card">
                     <span class="stat-value" id="todayCount">0</span>
@@ -96,6 +96,11 @@
                     <span class="punch-text">打卡</span>
                 </button>
                 <p class="last-punch" id="lastPunchTime">暂无打卡记录</p>
+            </section>
+
+            <section class="heatmap-section" aria-label="本月打卡">
+                <h2 class="heatmap-title">本月打卡</h2>
+                <div id="heatmapContainer" class="heatmap-container"></div>
             </section>
 
             <section class="history-section" aria-label="历史记录">
@@ -142,7 +147,14 @@
                     <!-- 预测下次开始日 -->
                 </div>
                 <section class="period-history-section">
-                    <h2 class="period-history-title">历史记录</h2>
+                    <div class="period-history-header">
+                        <h2 class="period-history-title">历史记录</h2>
+                        <div class="period-history-actions">
+                            <button type="button" id="periodImportBtn" class="period-export-btn">导入</button>
+                            <button type="button" id="periodExportBtn" class="period-export-btn">导出</button>
+                        </div>
+                    </div>
+                    <input type="file" id="periodFileInput" accept=".csv,text/csv" hidden>
                     <div class="period-history-list" id="periodHistoryList">
                         <!-- 经期历史列表 -->
                     </div>
@@ -153,8 +165,10 @@
         <div class="actions-fab" id="actionsFab">
             <div class="actions-menu" id="actionsMenu">
                 <button id="exportBtn" class="action-btn">导出数据</button>
+                <button id="importBtn" class="action-btn">导入数据</button>
                 <button id="clearBtn" class="action-btn danger">清空记录</button>
             </div>
+            <input type="file" id="punchFileInput" accept=".csv,text/csv" hidden>
             <button type="button" class="actions-fab-toggle" id="actionsFabToggle" aria-label="更多操作">
                 <span class="fab-icon">⋯</span>
             </button>
@@ -166,8 +180,8 @@
                 <span class="tab-bar-label">打卡</span>
             </button>
             <button type="button" class="tab-bar-item" data-tab="period" role="tab" aria-selected="false">
-                <span class="tab-bar-icon">💕</span>
-                <span class="tab-bar-label">姨妈</span>
+                <span class="tab-bar-icon">🌙</span>
+                <span class="tab-bar-label">秋瑾宝宝姨妈</span>
             </button>
         </nav>
     </div>
@@ -180,6 +194,39 @@
                 <button id="modalCancel" class="modal-btn">取消</button>
                 <button id="modalConfirm" class="modal-btn danger">删除</button>
             </div>
+        </div>
+    </div>
+
+    <div id="achievementToast" class="achievement-toast" aria-live="polite">
+        <span class="achievement-toast-icon"></span>
+        <span class="achievement-toast-title"></span>
+    </div>
+
+    <div id="achievementModal" class="modal-backdrop theme-modal" hidden>
+        <div class="modal theme-modal-inner achievement-modal-inner">
+            <div class="theme-modal-title">成就</div>
+            <div id="achievementList" class="achievement-list"></div>
+            <button type="button" class="theme-modal-close" id="achievementModalClose" aria-label="关闭">×</button>
+        </div>
+    </div>
+
+    <div id="themeModal" class="modal-backdrop theme-modal" hidden>
+        <div class="modal theme-modal-inner">
+            <div class="theme-modal-title">主题颜色</div>
+            <div class="theme-modal-row">
+                <label class="theme-label">自选颜色</label>
+                <input type="color" id="themeColorInput" class="theme-color-input" value="#6B7FD7" title="选择主题色">
+            </div>
+            <div class="theme-modal-actions">
+                <button type="button" id="themeResetBtn" class="theme-reset-btn">重置为按星期自动</button>
+                <button type="button" class="theme-help-btn" id="themeHelpBtn" aria-label="使用说明">?</button>
+            </div>
+            <div id="themeHelpBlock" class="theme-help-block" hidden>
+                <p class="theme-help-title">使用说明</p>
+                <p class="theme-help-text">默认按周一到周日自动切换七种柔和主题色（周日暖杏、周一紫蓝、周二绿、周三橙、周四粉、周五紫、周六青绿）。</p>
+                <p class="theme-help-text">秋瑾宝宝可以在此选择自己喜欢的颜色，选中后将固定使用该主题；点击「重置为按星期自动」即可恢复按星期自动切换。</p>
+            </div>
+            <button type="button" class="theme-modal-close" id="themeModalClose" aria-label="关闭">×</button>
         </div>
     </div>
 
