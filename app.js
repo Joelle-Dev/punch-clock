@@ -1181,6 +1181,65 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // 设置菜单
+  var settingsBtn = document.getElementById('settingsBtn');
+  var settingsModal = document.getElementById('settingsModal');
+  var settingsModalClose = document.getElementById('settingsModalClose');
+  var aboutBtn = document.getElementById('aboutBtn');
+  var aboutModal = document.getElementById('aboutModal');
+  var aboutModalClose = document.getElementById('aboutModalClose');
+  var helpBtn = document.getElementById('helpBtn');
+  var helpModal = document.getElementById('helpModal');
+  var helpModalClose = document.getElementById('helpModalClose');
+
+  function openSettingsModal() {
+    if (settingsModal) settingsModal.hidden = false;
+  }
+
+  function closeSettingsModal() {
+    if (settingsModal) settingsModal.hidden = true;
+  }
+
+  function openAboutModal() {
+    closeSettingsModal();
+    if (aboutModal) aboutModal.hidden = false;
+  }
+
+  function closeAboutModal() {
+    if (aboutModal) aboutModal.hidden = true;
+  }
+
+  function openHelpModal() {
+    closeSettingsModal();
+    if (helpModal) helpModal.hidden = false;
+  }
+
+  function closeHelpModal() {
+    if (helpModal) helpModal.hidden = true;
+  }
+
+  if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
+  if (settingsModalClose) settingsModalClose.addEventListener('click', closeSettingsModal);
+  if (settingsModal) {
+    settingsModal.addEventListener('click', function (e) {
+      if (e.target === settingsModal) closeSettingsModal();
+    });
+  }
+  if (aboutBtn) aboutBtn.addEventListener('click', openAboutModal);
+  if (aboutModalClose) aboutModalClose.addEventListener('click', closeAboutModal);
+  if (aboutModal) {
+    aboutModal.addEventListener('click', function (e) {
+      if (e.target === aboutModal) closeAboutModal();
+    });
+  }
+  if (helpBtn) helpBtn.addEventListener('click', openHelpModal);
+  if (helpModalClose) helpModalClose.addEventListener('click', closeHelpModal);
+  if (helpModal) {
+    helpModal.addEventListener('click', function (e) {
+      if (e.target === helpModal) closeHelpModal();
+    });
+  }
+
   var fab = document.getElementById('actionsFabToggle');
   var menu = document.getElementById('actionsMenu');
   var periodMenu = document.getElementById('periodActionsMenu');

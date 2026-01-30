@@ -56,9 +56,14 @@
     <div class="app-shell">
         <header class="top-banner">
             <span class="top-banner-text">潘秋瑾，你今天真好看 ✨</span>
-            <button type="button" class="top-banner-theme-btn" id="themeBtn" aria-label="主题颜色">
-                <span class="top-banner-theme-icon" aria-hidden="true">🎨</span>
-            </button>
+            <div class="top-banner-actions">
+                <button type="button" class="top-banner-btn" id="themeBtn" aria-label="主题颜色">
+                    <span class="top-banner-icon" aria-hidden="true">🎨</span>
+                </button>
+                <button type="button" class="top-banner-btn" id="settingsBtn" aria-label="设置">
+                    <span class="top-banner-icon" aria-hidden="true">⚙️</span>
+                </button>
+            </div>
         </header>
         <!-- 日常打卡面板 -->
         <div id="panelPunch" class="tab-panel active">
@@ -240,6 +245,62 @@
                 <p class="theme-help-text">秋瑾宝宝可以在此选择自己喜欢的颜色，选中后将固定使用该主题；点击「重置为按星期自动」即可恢复按星期自动切换。</p>
             </div>
             <button type="button" class="theme-modal-close" id="themeModalClose" aria-label="关闭">×</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal-backdrop theme-modal" hidden>
+        <div class="modal theme-modal-inner">
+            <div class="theme-modal-title">设置</div>
+            <div class="settings-menu">
+                <button type="button" class="settings-menu-item" id="aboutBtn">
+                    <span class="settings-menu-icon">ℹ️</span>
+                    <span class="settings-menu-text">关于</span>
+                    <span class="settings-menu-arrow">›</span>
+                </button>
+                <button type="button" class="settings-menu-item" id="helpBtn">
+                    <span class="settings-menu-icon">❓</span>
+                    <span class="settings-menu-text">使用帮助</span>
+                    <span class="settings-menu-arrow">›</span>
+                </button>
+            </div>
+            <button type="button" class="theme-modal-close" id="settingsModalClose" aria-label="关闭">×</button>
+        </div>
+    </div>
+
+    <div id="aboutModal" class="modal-backdrop theme-modal" hidden>
+        <div class="modal theme-modal-inner">
+            <div class="theme-modal-title">关于</div>
+            <div class="about-content">
+                <p class="about-text">秋瑾宝宝专属打卡小本本</p>
+                <p class="about-text">记录生活中的每一个美好瞬间 ✨</p>
+                <p class="about-version">版本 1.0.0</p>
+            </div>
+            <button type="button" class="theme-modal-close" id="aboutModalClose" aria-label="关闭">×</button>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal-backdrop theme-modal" hidden>
+        <div class="modal theme-modal-inner">
+            <div class="theme-modal-title">使用帮助</div>
+            <div class="help-content">
+                <div class="help-section">
+                    <h3 class="help-section-title">打卡功能</h3>
+                    <p class="help-text">选择类型（如厕/饭否/健身/其他）后点击打卡按钮即可记录。支持查看历史记录、导出数据。</p>
+                </div>
+                <div class="help-section">
+                    <h3 class="help-section-title">她的周期</h3>
+                    <p class="help-text">记录经期开始和结束日期，系统会自动预测下次经期时间。</p>
+                </div>
+                <div class="help-section">
+                    <h3 class="help-section-title">数据管理</h3>
+                    <p class="help-text">点击右下角「⋯」按钮可导出、导入或清空数据。数据保存在本地，不会上传到服务器。</p>
+                </div>
+                <div class="help-section">
+                    <h3 class="help-section-title">主题颜色</h3>
+                    <p class="help-text">点击顶部「🎨」按钮可自定义主题色，或恢复按星期自动切换。</p>
+                </div>
+            </div>
+            <button type="button" class="theme-modal-close" id="helpModalClose" aria-label="关闭">×</button>
         </div>
     </div>
 
