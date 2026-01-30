@@ -17,10 +17,6 @@ const modalTitleEl = document.getElementById('modalTitle');
 const modalMessageEl = document.getElementById('modalMessage');
 const modalCancelBtn = document.getElementById('modalCancel');
 const modalConfirmBtn = document.getElementById('modalConfirm');
-const praiseWrapEl = document.getElementById('praiseWrap');
-const praiseTextEl = document.getElementById('praiseText');
-const praiseHeartsEl = document.getElementById('praiseHearts');
-
 const STORAGE_KEY = 'punch_records_v1';
 const PERIOD_STORAGE_KEY = 'punch_period_records_v1';
 const THEME_STORAGE_KEY = 'punch_theme_v1';
@@ -387,6 +383,27 @@ function getPraiseMessage(type) {
   }
 }
 
+// 打卡成功弹层：填充庆祝背景（爱心/星星等）
+function fillCelebrationLayer(container) {
+  if (!container) return;
+  container.innerHTML = '';
+  const symbols = ['♥', '✨', '★', '☆', '•', '♥', '✨', '★'];
+  const anims = ['celebrate-float', 'celebrate-twinkle', 'celebrate-rise'];
+  const colors = ['#ff6b9d', '#e84c7a', '#ffd700', '#ffb347', '#c2185b', '#f8bbd9'];
+  const count = 28;
+  for (let i = 0; i < count; i++) {
+    const span = document.createElement('span');
+    span.className = 'celebrate-item ' + anims[i % anims.length];
+    span.textContent = symbols[i % symbols.length];
+    span.style.left = Math.random() * 80 + 10 + '%';
+    span.style.top = Math.random() * 80 + 10 + '%';
+    span.style.animationDelay = Math.random() * 0.8 + 's';
+    span.style.color = colors[i % colors.length];
+    span.style.fontSize = (12 + Math.random() * 12) + 'px';
+    container.appendChild(span);
+  }
+}
+
 function applyFilter(records, filter) {
   const now = new Date();
   const todayKey = getDateKey(now);
@@ -711,6 +728,12 @@ function init() {
   render(state.records, state.filter);
   checkAllAchievements(state.records);
 
+  // 打卡成功弹层：缓存 DOM 引用，避免每次点击重复查询
+  const punchSuccessModal = document.getElementById('punchSuccessModal');
+  const punchSuccessMessage = document.getElementById('punchSuccessMessage');
+  const punchSuccessCelebration = document.getElementById('punchSuccessCelebration');
+  const punchSuccessConfirm = document.getElementById('punchSuccessConfirm');
+
   punchBtn.addEventListener('click', () => {
     const now = new Date();
     const record = {
@@ -721,44 +744,35 @@ function init() {
     };
     state.records.push(record);
     saveRecords(state.records);
-    render(state.records, state.filter);
 
-    // 按钮轻微弹跳动效
+    // 1）立刻弹层 + 文案；庆祝背景延后一帧生成，不阻塞点击
+    if (punchSuccessModal && punchSuccessMessage) {
+      punchSuccessMessage.textContent = getPraiseMessage(state.currentType);
+      punchSuccessModal.hidden = false;
+      requestAnimationFrame(() => fillCelebrationLayer(punchSuccessCelebration));
+    }
+
+    // 2）按钮弹跳
     punchBtn.classList.remove('punch-button-bounce');
-    // 强制重绘以便重复触发动画
     // eslint-disable-next-line no-unused-expressions
     punchBtn.offsetWidth;
     punchBtn.classList.add('punch-button-bounce');
 
-    // 按类型显示不同表扬文案 + 爱心发散
-    if (praiseTextEl) praiseTextEl.textContent = getPraiseMessage(state.currentType);
-    if (praiseWrapEl) praiseWrapEl.classList.add('show');
-    if (praiseHeartsEl) {
-      praiseHeartsEl.innerHTML = '';
-      const hearts = ['❤', '💜', '💗'];
-      const r = 32;
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * 2 * Math.PI - Math.PI / 2;
-        const tx = Math.cos(angle) * r;
-        const ty = Math.sin(angle) * r;
-        const span = document.createElement('span');
-        span.className = 'heart-burst';
-        span.textContent = hearts[i % hearts.length];
-        span.style.setProperty('--tx', tx + 'px');
-        span.style.setProperty('--ty', ty + 'px');
-        span.style.setProperty('--delay', i * 40 + 'ms');
-        praiseHeartsEl.appendChild(span);
-      }
-    }
-    if (praiseTimer) clearTimeout(praiseTimer);
-    praiseTimer = setTimeout(() => {
-      if (praiseWrapEl) praiseWrapEl.classList.remove('show');
-    }, 1800);
-
-    // 成就检测
-    const newly = checkAllAchievements(state.records);
-    newly.forEach((a) => showAchievementToast(a));
+    // 3）列表与成就延后执行
+    setTimeout(() => {
+      render(state.records, state.filter);
+      checkAllAchievements(state.records).forEach((a) => showAchievementToast(a));
+    }, 0);
   });
+
+  if (punchSuccessConfirm && punchSuccessModal) {
+    punchSuccessConfirm.addEventListener('click', () => { punchSuccessModal.hidden = true; });
+  }
+  if (punchSuccessModal) {
+    punchSuccessModal.addEventListener('click', (e) => {
+      if (e.target === punchSuccessModal) punchSuccessModal.hidden = true;
+    });
+  }
 
   // 成就入口点击
   const achievementBtn = document.getElementById('achievementBtn');

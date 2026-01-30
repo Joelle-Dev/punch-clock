@@ -86,10 +86,7 @@
             </section>
 
             <section class="punch-section">
-                <div class="praise-wrap" id="praiseWrap" aria-live="polite">
-                    <span class="praise-text" id="praiseText"></span>
-                    <span class="praise-hearts" id="praiseHearts"></span>
-                </div>
+                <div class="hearts-burst-layer" id="heartsBurstLayer" aria-hidden="true"></div>
                 <button id="punchBtn" class="punch-button" type="button" aria-label="打卡">
                     <span class="punch-icon" aria-hidden="true">👊</span>
                     <span class="punch-text">打卡</span>
@@ -175,14 +172,30 @@
 
         <nav class="tab-bar" role="tablist" aria-label="主功能">
             <button type="button" class="tab-bar-item active" data-tab="punch" role="tab" aria-selected="true">
-                <span class="tab-bar-icon">✨</span>
+                <span class="tab-bar-icon tab-bar-icon-svg" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                        <path d="M12 0l1.5 6.5L20 8l-6.5 1.5L12 16l-1.5-6.5L4 8l6.5-1.5L12 0z"/>
+                    </svg>
+                </span>
                 <span class="tab-bar-label">打卡</span>
             </button>
             <button type="button" class="tab-bar-item" data-tab="period" role="tab" aria-selected="false">
-                <span class="tab-bar-icon">🌙</span>
+                <span class="tab-bar-icon tab-bar-icon-svg" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+                        <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.5 5.5 0 0 1-4.9 4.9 9 9 0 0 0-4-13.54z"/>
+                    </svg>
+                </span>
                 <span class="tab-bar-label">秋瑾宝宝姨妈</span>
             </button>
         </nav>
+    </div>
+
+    <div id="punchSuccessModal" class="modal-backdrop punch-success-modal" hidden>
+        <div class="modal punch-success-modal-inner">
+            <div class="punch-success-celebration" id="punchSuccessCelebration" aria-hidden="true"></div>
+            <div class="punch-success-message" id="punchSuccessMessage"></div>
+            <button type="button" class="punch-success-btn" id="punchSuccessConfirm">确定</button>
+        </div>
     </div>
 
     <div id="confirmModal" class="modal-backdrop" hidden>
