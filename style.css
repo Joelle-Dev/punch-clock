@@ -1052,6 +1052,7 @@ body {
 
 .period-history-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
@@ -1129,11 +1130,7 @@ body {
     font-size: 14px;
 }
 
-/* ===== 悬浮操作按钮（仅在打卡 Tab 显示） ===== */
-.actions-fab.tab-period-hidden {
-    display: none;
-}
-
+/* ===== 悬浮操作按钮（打卡 / 姨妈 Tab 共用，按当前 Tab 展开对应菜单） ===== */
 .actions-fab {
     position: fixed;
     right: calc(20px + var(--safe-right));

@@ -44,8 +44,8 @@
             color: #6B7280;
         }
     </style>
-  <script type="module" crossorigin src="./assets/index-DKlt8-yp.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DI1xZHBg.css">
+  <script type="module" crossorigin src="./assets/index-CPEJnH0r.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BgebO76h.css">
 <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
 <body>
     
@@ -146,12 +146,7 @@
                 <section class="period-history-section">
                     <div class="period-history-header">
                         <h2 class="period-history-title">历史记录</h2>
-                        <div class="period-history-actions">
-                            <button type="button" id="periodImportBtn" class="period-export-btn">导入</button>
-                            <button type="button" id="periodExportBtn" class="period-export-btn">导出</button>
-                        </div>
                     </div>
-                    <input type="file" id="periodFileInput" accept=".csv,text/csv" hidden>
                     <div class="period-history-list" id="periodHistoryList">
                         <!-- 经期历史列表 -->
                     </div>
@@ -165,7 +160,13 @@
                 <button id="importBtn" class="action-btn">导入数据</button>
                 <button id="clearBtn" class="action-btn danger">清空记录</button>
             </div>
+            <div class="actions-menu" id="periodActionsMenu">
+                <button type="button" id="periodExportBtn" class="action-btn">导出数据</button>
+                <button type="button" id="periodImportBtn" class="action-btn">导入数据</button>
+                <button type="button" id="periodClearBtn" class="action-btn danger">清空记录</button>
+            </div>
             <input type="file" id="punchFileInput" accept=".csv,text/csv" hidden>
+            <input type="file" id="periodFileInput" accept=".csv,text/csv" hidden>
             <button type="button" class="actions-fab-toggle" id="actionsFabToggle" aria-label="更多操作">
                 <span class="fab-icon">⋯</span>
             </button>
@@ -186,7 +187,7 @@
                         <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.5 5.5 0 0 1-4.9 4.9 9 9 0 0 0-4-13.54z"/>
                     </svg>
                 </span>
-                <span class="tab-bar-label">秋瑾宝宝姨妈</span>
+                <span class="tab-bar-label">她的周期</span>
             </button>
         </nav>
     </div>

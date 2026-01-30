@@ -1038,7 +1038,8 @@ function init() {
     });
   }
 
-  // 姨妈打卡：导出数据
+  // 姨妈打卡：操作菜单（用于操作后关闭悬浮菜单）
+  const periodActionsMenuEl = document.getElementById('periodActionsMenu');
   const periodExportBtn = document.getElementById('periodExportBtn');
   if (periodExportBtn) {
     periodExportBtn.addEventListener('click', () => {
@@ -1071,6 +1072,24 @@ function init() {
       a.download = `经期记录-${getDateKey(new Date())}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+      if (periodActionsMenuEl) periodActionsMenuEl.classList.remove('open');
+    });
+  }
+
+  const periodClearBtn = document.getElementById('periodClearBtn');
+  if (periodClearBtn) {
+    periodClearBtn.addEventListener('click', () => {
+      if (!state.periodRecords.length) return;
+      if (periodActionsMenuEl) periodActionsMenuEl.classList.remove('open');
+      showConfirm({
+        title: '清空经期记录',
+        message: '确定要清空所有经期记录吗？此操作不可恢复。',
+        onConfirm: () => {
+          state.periodRecords = [];
+          savePeriodRecords(state.periodRecords);
+          renderPeriodPanel();
+        },
+      });
     });
   }
 
@@ -1078,6 +1097,7 @@ function init() {
   const periodFileInput = document.getElementById('periodFileInput');
   if (periodImportBtn && periodFileInput) {
     periodImportBtn.addEventListener('click', () => {
+      if (periodActionsMenuEl) periodActionsMenuEl.classList.remove('open');
       periodFileInput.value = '';
       periodFileInput.click();
     });
@@ -1163,13 +1183,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var fab = document.getElementById('actionsFabToggle');
   var menu = document.getElementById('actionsMenu');
-  if (fab && menu) {
+  var periodMenu = document.getElementById('periodActionsMenu');
+  if (fab && menu && periodMenu) {
     fab.addEventListener('click', function () {
-      menu.classList.toggle('open');
+      var current = state.activeTab === 'punch' ? menu : periodMenu;
+      var other = state.activeTab === 'punch' ? periodMenu : menu;
+      other.classList.remove('open');
+      current.classList.toggle('open');
     });
     document.addEventListener('click', function (e) {
-      if (menu.classList.contains('open') && !fab.contains(e.target) && !menu.contains(e.target)) {
+      if (fab.contains(e.target) || menu.contains(e.target) || periodMenu.contains(e.target)) return;
+      if (menu.classList.contains('open') || periodMenu.classList.contains('open')) {
         menu.classList.remove('open');
+        periodMenu.classList.remove('open');
       }
     });
   }
@@ -1182,6 +1208,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function switchTab(tab) {
     state.activeTab = tab;
+    if (menu && menu.classList.contains('open')) menu.classList.remove('open');
+    if (periodMenu && periodMenu.classList.contains('open')) periodMenu.classList.remove('open');
     if (tab === 'punch') {
       if (panelPunch) {
         panelPunch.classList.add('active');
@@ -1191,7 +1219,6 @@ document.addEventListener('DOMContentLoaded', function () {
         panelPeriod.classList.remove('active');
         panelPeriod.hidden = true;
       }
-      if (actionsFab) actionsFab.classList.remove('tab-period-hidden');
     } else {
       if (panelPunch) {
         panelPunch.classList.remove('active');
@@ -1201,7 +1228,6 @@ document.addEventListener('DOMContentLoaded', function () {
         panelPeriod.classList.add('active');
         panelPeriod.removeAttribute('hidden');
       }
-      if (actionsFab) actionsFab.classList.add('tab-period-hidden');
       renderPeriodPanel();
     }
     tabItems.forEach(function (item) {
