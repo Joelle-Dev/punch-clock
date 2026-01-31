@@ -22,6 +22,16 @@
               <span class="mine-cell-icon" aria-hidden="true">ℹ️</span>
             </template>
           </van-cell>
+          <van-cell
+            v-if="hasServiceWorker"
+            title="检查更新"
+            is-link
+            @click="checkForUpdate"
+          >
+            <template #icon>
+              <span class="mine-cell-icon" aria-hidden="true">🔄</span>
+            </template>
+          </van-cell>
         </van-cell-group>
       </section>
     </main>
@@ -46,9 +56,20 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
+import { ref, inject, computed } from 'vue';
+import { showToast } from 'vant';
 
 const openThemeModal = inject('openThemeModal', () => {});
+
+const hasServiceWorker = computed(() => typeof navigator !== 'undefined' && 'serviceWorker' in navigator);
+
+function checkForUpdate() {
+  if (!hasServiceWorker.value) return;
+  navigator.serviceWorker.getRegistration().then((reg) => {
+    if (reg) reg.update();
+    showToast('正在检查更新，如有新版本将提示刷新');
+  });
+}
 
 const contentOpen = ref(false);
 const contentTitle = ref('');
@@ -76,6 +97,10 @@ const HELP_HTML = `
   <div class="tip-section">
     <p class="tip-section-title">主题颜色</p>
     <p class="tip-line">上方「主题颜色」可自选颜色；在弹层中点击「重置为按星期自动」可恢复按星期（日～六）自动切换主题。</p>
+  </div>
+  <div class="tip-section">
+    <p class="tip-section-title">检查更新</p>
+    <p class="tip-line">从主屏幕打开时，点「检查更新」可主动检查是否有新版本；若有会弹出「发现新版本，请刷新」提示，点刷新即可。</p>
   </div>
 `;
 

@@ -31,9 +31,14 @@
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     --radius: 12px;
     --radius-lg: 16px;
+    /* constant() 兼容 iOS 11.0–11.1，env() 为标准；需 viewport-fit=cover 才生效 */
+    --safe-top: constant(safe-area-inset-top, 0px);
     --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: constant(safe-area-inset-bottom, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: constant(safe-area-inset-left, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: constant(safe-area-inset-right, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
     /* 本子/手账感：暖色纸纹与便签阴影 */
     --paper-bg: #FAF9F6;
@@ -218,10 +223,11 @@ body {
     to { opacity: 1; }
 }
 
-/* ---------- 底部 Tab 栏（van-tabbar，高亮随 --primary） ---------- */
-.app-tabbar {
+/* ---------- 底部 Tab 栏（van-tabbar，高亮随 --primary；底部安全区防刘海/横条遮挡） ---------- */
+.app-tabbar.van-tabbar {
     --van-tabbar-item-active-color: var(--primary);
-    padding-bottom: var(--safe-bottom);
+    padding-bottom: var(--safe-bottom) !important;
+    min-height: calc(50px + var(--safe-bottom));
 }
 .app-tabbar .van-tabbar-item--active {
     color: var(--primary);
