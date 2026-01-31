@@ -3,326 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script>(function(){var d=new Date().getDay();document.documentElement.classList.add('theme-day-'+d);})();</script>
+    <script>
+      (function(){
+        var root = document.documentElement;
+        var custom = null;
+        try { custom = localStorage.getItem('punch_theme_v1'); } catch(e) {}
+        if (custom && /^#[0-9A-Fa-f]{6}$/.test(custom)) {
+          root.style.setProperty('--splash-primary', custom);
+        } else {
+          var d = new Date().getDay();
+          root.classList.add('theme-day-' + d);
+        }
+      })();
+    </script>
     <meta name="description" content="轻量级打卡记录应用">
     <meta name="theme-color" content="#FFFFFF">
-    <!-- 首屏白底，减少黑屏 -->
     <style>html,body{background:#fff !important;}</style>
-    <!-- iOS Safari PWA 优化：正方形图标 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="秋瑾打卡">
     <title>打卡记录</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
-    <!-- 主屏幕图标：使用 icon-512.png.jpg -->
     <link rel="apple-touch-icon" href="./icon-512.png.jpg">
-    <link rel="stylesheet" href="./style.css">
     <link rel="manifest" href="./manifest.webmanifest">
     <style>
-        .splash-screen {
-            position: fixed;
-            inset: 0;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            transition: opacity 0.35s ease;
-        }
-        .splash-screen.splash-hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .splash-title {
-            font-size: 20px;
-            color: #4F46E5;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        .splash-subtitle {
-            font-size: 14px;
-            color: #6B7280;
-        }
+        /* 与 style.css 同步：splash 跟随按星期主题色 */
+        :root { --splash-surface: #FFFFFF; --splash-primary: #6B7FD7; }
+        .theme-day-0 { --splash-primary: #E8A87C; }
+        .theme-day-1 { --splash-primary: #6B7FD7; }
+        .theme-day-2 { --splash-primary: #52B788; }
+        .theme-day-3 { --splash-primary: #F4A261; }
+        .theme-day-4 { --splash-primary: #E87A9E; }
+        .theme-day-5 { --splash-primary: #9B7EDE; }
+        .theme-day-6 { --splash-primary: #00B4A0; }
+        .splash-screen { position: fixed; inset: 0; background: var(--splash-surface); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; transition: opacity 0.35s ease; }
+        .splash-screen.splash-hidden { opacity: 0; pointer-events: none; }
+        .splash-title { font-size: 20px; color: var(--splash-primary); margin-bottom: 8px; font-weight: 600; }
+        .splash-subtitle { font-size: 14px; color: var(--splash-primary); opacity: 0.85; }
     </style>
 </head>
 <body>
-    
     <div id="splash" class="splash-screen">
         <div class="splash-title">潘秋瑾</div>
-        <div class="splash-subtitle">奥利给</div>
+        <div class="splash-subtitle">奥利给～～</div>
     </div>
-
-    <div class="app-shell">
-        <header class="top-banner">
-            <span class="top-banner-text">潘秋瑾，你今天真好看 ✨</span>
-            <div class="top-banner-actions">
-                <button type="button" class="top-banner-btn" id="themeBtn" aria-label="主题颜色">
-                    <span class="top-banner-icon" aria-hidden="true">🎨</span>
-                </button>
-                <button type="button" class="top-banner-btn" id="settingsBtn" aria-label="设置">
-                    <span class="top-banner-icon" aria-hidden="true">⚙️</span>
-                </button>
-            </div>
-        </header>
-        <!-- 日常打卡面板 -->
-        <div id="panelPunch" class="tab-panel active">
-        <header class="app-header">
-            <div class="stats-row">
-                <div class="stat-card">
-                    <span class="stat-value" id="todayCount">0</span>
-                    <span class="stat-label">今日</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="streakCount">0</span>
-                    <span class="stat-label">连续</span>
-                </div>
-            </div>
-        </header>
-
-        <main class="app-main">
-            <section class="type-section" aria-label="选择类型">
-                <div class="type-tabs" role="tablist">
-                    <button class="type-tab active" data-type="toilet" role="tab">如厕</button>
-                    <button class="type-tab" data-type="meal" role="tab">饭否</button>
-                    <button class="type-tab" data-type="fitness" role="tab">健身</button>
-                    <button class="type-tab" data-type="other" role="tab">其他</button>
-                </div>
-            </section>
-
-            <section class="punch-section">
-                <div class="hearts-burst-layer" id="heartsBurstLayer" aria-hidden="true"></div>
-                <button id="punchBtn" class="punch-button" type="button" aria-label="打卡">
-                    <span class="punch-icon" aria-hidden="true">👊</span>
-                    <span class="punch-text">打卡</span>
-                </button>
-                <p class="last-punch" id="lastPunchTime">暂无打卡记录</p>
-            </section>
-
-            <section class="heatmap-section" aria-label="本月打卡">
-                <h2 class="heatmap-title">本月打卡</h2>
-                <div id="heatmapContainer" class="heatmap-container"></div>
-            </section>
-
-            <section class="history-section" aria-label="历史记录">
-                <div class="history-header">
-                    <h2 class="history-title">记录</h2>
-                    <div class="filter-tabs" role="tablist">
-                        <button class="filter-tab active" data-filter="all" role="tab">全部</button>
-                        <button class="filter-tab" data-filter="today" role="tab">今天</button>
-                        <button class="filter-tab" data-filter="week" role="tab">本周</button>
-                        <button class="filter-tab" data-filter="month" role="tab">本月</button>
-                    </div>
-                </div>
-                <div class="history-type-tabs">
-                    <button class="history-type-tab active" data-history-type="all">全部</button>
-                    <button class="history-type-tab" data-history-type="toilet">如厕</button>
-                    <button class="history-type-tab" data-history-type="meal">饭否</button>
-                    <button class="history-type-tab" data-history-type="fitness">健身</button>
-                    <button class="history-type-tab" data-history-type="other">其他</button>
-                </div>
-                <div class="history-list" id="historyList">
-                    <!-- 打卡记录将动态插入这里 -->
-                </div>
-            </section>
-        </main>
-
-        </div>
-        <!-- 姨妈打卡面板 -->
-        <div id="panelPeriod" class="tab-panel" hidden>
-            <header class="app-header period-header">
-                <div class="header-inner">
-                    <h1 class="app-title">姨妈打卡</h1>
-                    <p class="app-subtitle">记录经期，预测下次</p>
-                </div>
-            </header>
-            <main class="period-main">
-                <div class="period-status" id="periodStatus">
-                    <!-- 当前状态：未开始 / 进行中 / 已结束 -->
-                </div>
-                <div class="period-actions">
-                    <button type="button" id="periodStartBtn" class="period-btn period-btn-start">来的第一天</button>
-                    <button type="button" id="periodEndBtn" class="period-btn period-btn-end">结束了</button>
-                </div>
-                <div class="period-prediction" id="periodPrediction">
-                    <!-- 预测下次开始日 -->
-                </div>
-                <section class="period-history-section">
-                    <div class="period-history-header">
-                        <h2 class="period-history-title">历史记录</h2>
-                    </div>
-                    <div class="period-history-list" id="periodHistoryList">
-                        <!-- 经期历史列表 -->
-                    </div>
-                </section>
-            </main>
-        </div>
-
-        <div class="actions-fab" id="actionsFab">
-            <div class="actions-menu" id="actionsMenu">
-                <button id="exportBtn" class="action-btn">导出数据</button>
-                <button id="importBtn" class="action-btn">导入数据</button>
-                <button id="clearBtn" class="action-btn danger">清空记录</button>
-            </div>
-            <div class="actions-menu" id="periodActionsMenu">
-                <button type="button" id="periodExportBtn" class="action-btn">导出数据</button>
-                <button type="button" id="periodImportBtn" class="action-btn">导入数据</button>
-                <button type="button" id="periodClearBtn" class="action-btn danger">清空记录</button>
-            </div>
-            <input type="file" id="punchFileInput" accept=".csv,text/csv" hidden>
-            <input type="file" id="periodFileInput" accept=".csv,text/csv" hidden>
-            <button type="button" class="actions-fab-toggle" id="actionsFabToggle" aria-label="更多操作">
-                <span class="fab-icon">⋯</span>
-            </button>
-        </div>
-
-        <nav class="tab-bar" role="tablist" aria-label="主功能">
-            <button type="button" class="tab-bar-item active" data-tab="punch" role="tab" aria-selected="true">
-                <span class="tab-bar-icon tab-bar-icon-svg" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                        <path d="M12 0l1.5 6.5L20 8l-6.5 1.5L12 16l-1.5-6.5L4 8l6.5-1.5L12 0z"/>
-                    </svg>
-                </span>
-                <span class="tab-bar-label">打卡</span>
-            </button>
-            <button type="button" class="tab-bar-item" data-tab="period" role="tab" aria-selected="false">
-                <span class="tab-bar-icon tab-bar-icon-svg" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                        <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.5 5.5 0 0 1-4.9 4.9 9 9 0 0 0-4-13.54z"/>
-                    </svg>
-                </span>
-                <span class="tab-bar-label">她的周期</span>
-            </button>
-        </nav>
-    </div>
-
-    <div id="punchSuccessModal" class="modal-backdrop punch-success-modal" hidden>
-        <div class="modal punch-success-modal-inner">
-            <div class="punch-success-celebration" id="punchSuccessCelebration" aria-hidden="true"></div>
-            <div class="punch-success-message" id="punchSuccessMessage"></div>
-            <button type="button" class="punch-success-btn" id="punchSuccessConfirm">确定</button>
-        </div>
-    </div>
-
-    <div id="confirmModal" class="modal-backdrop" hidden>
-        <div class="modal">
-            <div class="modal-title" id="modalTitle">确认删除</div>
-            <div class="modal-message" id="modalMessage"></div>
-            <div class="modal-actions">
-                <button id="modalCancel" class="modal-btn">取消</button>
-                <button id="modalConfirm" class="modal-btn danger">删除</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="achievementToast" class="achievement-toast" aria-live="polite">
-        <span class="achievement-toast-icon"></span>
-        <span class="achievement-toast-title"></span>
-    </div>
-
-    <div id="achievementModal" class="modal-backdrop theme-modal" hidden>
-        <div class="modal theme-modal-inner achievement-modal-inner">
-            <div class="theme-modal-title">成就</div>
-            <div id="achievementList" class="achievement-list"></div>
-            <button type="button" class="theme-modal-close" id="achievementModalClose" aria-label="关闭">×</button>
-        </div>
-    </div>
-
-    <div id="themeModal" class="modal-backdrop theme-modal" hidden>
-        <div class="modal theme-modal-inner">
-            <div class="theme-modal-title">主题颜色</div>
-            <div class="theme-modal-row">
-                <label class="theme-label">自选颜色</label>
-                <input type="color" id="themeColorInput" class="theme-color-input" value="#6B7FD7" title="选择主题色">
-            </div>
-            <div class="theme-modal-actions">
-                <button type="button" id="themeResetBtn" class="theme-reset-btn">重置为按星期自动</button>
-                <button type="button" class="theme-help-btn" id="themeHelpBtn" aria-label="使用说明">?</button>
-            </div>
-            <div id="themeHelpBlock" class="theme-help-block" hidden>
-                <p class="theme-help-title">使用说明</p>
-                <p class="theme-help-text">默认按周一到周日自动切换七种柔和主题色（周日暖杏、周一紫蓝、周二绿、周三橙、周四粉、周五紫、周六青绿）。</p>
-                <p class="theme-help-text">秋瑾宝宝可以在此选择自己喜欢的颜色，选中后将固定使用该主题；点击「重置为按星期自动」即可恢复按星期自动切换。</p>
-            </div>
-            <button type="button" class="theme-modal-close" id="themeModalClose" aria-label="关闭">×</button>
-        </div>
-    </div>
-
-    <div id="settingsModal" class="modal-backdrop theme-modal" hidden>
-        <div class="modal theme-modal-inner">
-            <div class="theme-modal-title">设置</div>
-            <div class="settings-menu">
-                <button type="button" class="settings-menu-item" id="aboutBtn">
-                    <span class="settings-menu-icon">ℹ️</span>
-                    <span class="settings-menu-text">关于</span>
-                    <span class="settings-menu-arrow">›</span>
-                </button>
-                <button type="button" class="settings-menu-item" id="helpBtn">
-                    <span class="settings-menu-icon">❓</span>
-                    <span class="settings-menu-text">使用帮助</span>
-                    <span class="settings-menu-arrow">›</span>
-                </button>
-            </div>
-            <button type="button" class="theme-modal-close" id="settingsModalClose" aria-label="关闭">×</button>
-        </div>
-    </div>
-
-    <div id="aboutModal" class="modal-backdrop theme-modal" hidden>
-        <div class="modal theme-modal-inner">
-            <div class="theme-modal-title">关于</div>
-            <div class="about-content">
-                <p class="about-text">秋瑾宝宝专属打卡小本本</p>
-                <p class="about-text">记录生活中的每一个美好瞬间 ✨</p>
-                <p class="about-version">版本 1.0.0</p>
-            </div>
-            <button type="button" class="theme-modal-close" id="aboutModalClose" aria-label="关闭">×</button>
-        </div>
-    </div>
-
-    <div id="helpModal" class="modal-backdrop theme-modal" hidden>
-        <div class="modal theme-modal-inner">
-            <div class="theme-modal-title">使用帮助</div>
-            <div class="help-content">
-                <div class="help-section">
-                    <h3 class="help-section-title">打卡功能</h3>
-                    <p class="help-text">选择类型（如厕/饭否/健身/其他）后点击打卡按钮即可记录。支持查看历史记录、导出数据。</p>
-                </div>
-                <div class="help-section">
-                    <h3 class="help-section-title">她的周期</h3>
-                    <p class="help-text">记录经期开始和结束日期，系统会自动预测下次经期时间。</p>
-                </div>
-                <div class="help-section">
-                    <h3 class="help-section-title">数据管理</h3>
-                    <p class="help-text">点击右下角「⋯」按钮可导出、导入或清空数据。数据保存在本地，不会上传到服务器。</p>
-                </div>
-                <div class="help-section">
-                    <h3 class="help-section-title">主题颜色</h3>
-                    <p class="help-text">点击顶部「🎨」按钮可自定义主题色，或恢复按星期自动切换。</p>
-                </div>
-            </div>
-            <button type="button" class="theme-modal-close" id="helpModalClose" aria-label="关闭">×</button>
-        </div>
-    </div>
-
-    <script type="module" src="./app.js"></script>
-    <script>
-        // 启动页：等首帧白底渲染后再淡出，减少黑→白闪烁
-        (function () {
-            var splash = document.getElementById('splash');
-            if (!splash) return;
-            var hide = function () {
-                splash.classList.add('splash-hidden');
-                setTimeout(function () {
-                    splash.style.display = 'none';
-                }, 400);
-            };
-            if (document.readyState === 'complete') {
-                setTimeout(hide, 500);
-            } else {
-                window.addEventListener('load', function () { setTimeout(hide, 500); });
-            }
-        })();
-    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>
-
