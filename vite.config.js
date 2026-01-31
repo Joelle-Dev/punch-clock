@@ -18,7 +18,7 @@ export default defineConfig({
       dts: false,
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icon-192.png.jpg', 'icon-512.png.jpg'],
       manifest: {
         name: '潘秋瑾打卡',
