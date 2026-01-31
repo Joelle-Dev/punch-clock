@@ -61,7 +61,11 @@ function saveRecords(records) {
 }
 
 function getDateKey(date) {
-  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+  // 使用本地日期，与主题 getDay() 一致，避免 UTC 导致「今天」差一天（如中国区 0:00–8:00）
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function groupByDate(records) {
@@ -86,7 +90,10 @@ function formatTime(date) {
 }
 
 function formatDateDisplay(dateKey) {
-  const [year, month, day] = dateKey.split('-');
+  if (!dateKey || typeof dateKey !== 'string') return '';
+  const parts = dateKey.split('-');
+  if (parts.length < 3) return dateKey;
+  const [year, month, day] = parts;
   return `${year}年${Number(month)}月${Number(day)}日`;
 }
 
@@ -541,10 +548,12 @@ function render(allRecords, activeFilter = 'all') {
 
   // 本月打卡热力图
   renderHeatmap(document.getElementById('heatmapContainer'), state.records);
+}
 
-  // 成就数量
-  const achievementCountEl = document.getElementById('achievementCount');
-  if (achievementCountEl) achievementCountEl.textContent = String(loadUnlockedAchievements().length);
+// 从主屏幕 / 后台恢复时刷新「今天」相关 UI，避免仍显示昨天日期
+function refreshDateDependentUI() {
+  render(state.records, state.filter);
+  renderPeriodPanel();
 }
 
 let state = {
@@ -1305,6 +1314,14 @@ document.addEventListener('DOMContentLoaded', function () {
       var tab = item.getAttribute('data-tab');
       if (tab) switchTab(tab);
     });
+  });
+
+  // 从主屏幕打开或从后台恢复时刷新「今天」相关 UI，避免仍显示昨天日期
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') refreshDateDependentUI();
+  });
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) refreshDateDependentUI();
   });
 });
 
