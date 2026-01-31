@@ -236,6 +236,17 @@ body {
     color: inherit;
 }
 
+/* ---------- 主按钮跟随主题色（补录、来的第一天等） ---------- */
+.van-button--primary {
+    --van-primary-color: var(--primary);
+    --van-button-primary-background: var(--primary);
+    --van-button-primary-border-color: var(--primary);
+}
+.van-button--primary:not(.van-button--plain) {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
 /* ---------- Toast（跟随主题色） ---------- */
 .van-toast {
     --van-toast-background: var(--primary);

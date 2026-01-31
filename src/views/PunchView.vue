@@ -79,9 +79,9 @@
 <script setup>
 import '../styles/punch.css';
 import { ref, computed, onMounted, inject } from 'vue';
-import { showToast } from 'vant';
 import { usePunchRecords } from '../composables/usePunchRecords';
 import { useAchievements } from '../composables/useAchievements';
+import { useDoubleTapHint } from '../composables/useDoubleTapHint';
 import { dayjs, formatDateDisplay, formatTime } from '../utils/date';
 import { getPraiseMessage } from '../utils/praise';
 import PunchSuccessModal from '../components/PunchSuccessModal.vue';
@@ -98,7 +98,7 @@ const currentType = ref(
 const bounce = ref(false);
 const punchSuccessOpen = ref(false);
 const punchSuccessMessage = ref('');
-const lastTapTime = ref(0);
+const { shouldSkipDueToDoubleTap } = useDoubleTapHint();
 
 const typeTabs = [
   { type: 'toilet', label: '如厕', emoji: '🚽', short: '厕', tint: '#4caf50' },
@@ -151,16 +151,8 @@ const heatmapCells = computed(() => {
 });
 
 
-const DOUBLE_TAP_MS = 5 * 60 * 1000; /* 五分钟内再次点击即提示彩蛋 */
-const DOUBLE_TAP_MESSAGES = ['打上瘾了？', '再打要收费了～', '手下留情～'];
-
 function onPunch() {
-  const now = Date.now();
-  if (now - lastTapTime.value < DOUBLE_TAP_MS) {
-    showToast(DOUBLE_TAP_MESSAGES[Math.floor(Math.random() * DOUBLE_TAP_MESSAGES.length)]);
-    return;
-  }
-  lastTapTime.value = now;
+  if (shouldSkipDueToDoubleTap()) return;
   punchSuccessMessage.value = getPraiseMessage(currentType.value);
   punchSuccessOpen.value = true;
   addRecord(currentType.value);

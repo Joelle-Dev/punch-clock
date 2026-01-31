@@ -65,6 +65,9 @@ const open = computed({
 });
 
 const { addRecordAt } = usePunchRecords();
+const { shouldSkipDueToDoubleTap } = useDoubleTapHint({
+  messages: ['补录上瘾了？', '再补要收费了～', '手下留情～'],
+});
 
 const typeTabs = [
   { type: 'toilet', label: '如厕' },
@@ -168,14 +171,15 @@ function onSubmit() {
 .retro-punch-submit {
   margin-top: 8px;
 }
-/* 补录按钮跟随系统主题色 */
-:deep(.retro-punch-submit) {
+/* 补录按钮跟随系统主题色（Vant 读 --van-primary-color） */
+:deep(.retro-punch-submit.van-button--primary) {
+  --van-primary-color: var(--primary);
   --van-button-primary-background: var(--primary);
   --van-button-primary-border-color: var(--primary);
   background: var(--primary) !important;
   border-color: var(--primary) !important;
 }
-:deep(.retro-punch-submit:active) {
+:deep(.retro-punch-submit.van-button--primary:active) {
   background: var(--primary-dark) !important;
   border-color: var(--primary-dark) !important;
 }
