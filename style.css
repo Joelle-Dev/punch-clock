@@ -221,6 +221,7 @@ body {
 /* ---------- 底部 Tab 栏（van-tabbar，高亮随 --primary） ---------- */
 .app-tabbar {
     --van-tabbar-item-active-color: var(--primary);
+    padding-bottom: var(--safe-bottom);
 }
 .app-tabbar .van-tabbar-item--active {
     color: var(--primary);
