@@ -84,23 +84,23 @@ const ABOUT_HTML = `
 const HELP_HTML = `
   <div class="tip-section">
     <p class="tip-section-title">打我</p>
-    <p class="tip-line">在主页选类型（如厕/饭否/健身/其他）后点「打我」按钮。可看今日次数、连续天数、成就和本月热力图。</p>
+    <p class="tip-line">选类型点「打我」，可看今日次数、连续、成就和本月热力图。</p>
   </div>
   <div class="tip-section">
     <p class="tip-section-title">小本本</p>
-    <p class="tip-line">底部「小本本」tab 可看全部记录，按时间、类型筛选，单条可删掉（有二次确认）。标题栏右侧 ⋯ 可补一下～、导出/导入/清空数据。</p>
+    <p class="tip-line">看记录、按时间/类型筛选，左滑删除。右上 ⋯ 可补一下～、导出/导入/清空。</p>
   </div>
   <div class="tip-section">
     <p class="tip-section-title">姨妈记</p>
-    <p class="tip-line">记经期「来的第一天」和「结束了」，可猜下次开始日期。标题栏右侧 ⋯ 可导出/导入/清空姨妈记数据。</p>
+    <p class="tip-line">记「来的第一天」「结束了」猜下次。右上 ⋯ 可补一下～、导出/导入/清空。记过啥左滑删除。</p>
   </div>
   <div class="tip-section">
     <p class="tip-section-title">主题颜色</p>
-    <p class="tip-line">上方「主题颜色」可自选颜色；在弹层中点击「重置为按星期自动」可恢复按星期（日～六）自动切换主题。</p>
+    <p class="tip-line">自选颜色，弹层里可重置为按星期自动。</p>
   </div>
   <div class="tip-section">
     <p class="tip-section-title">检查更新</p>
-    <p class="tip-line">从主屏幕打开时，点「检查更新」可主动检查是否有新版本；若有会弹出「发现新版本，请刷新」提示，点刷新即可。</p>
+    <p class="tip-line">点「检查更新」查新版本，有则提示刷新。</p>
   </div>
 `;
 

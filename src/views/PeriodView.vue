@@ -53,15 +53,25 @@
         <h2 class="period-history-title">记过啥</h2>
         <div class="period-history-list">
           <template v-if="sortedPeriods.length">
-            <div v-for="p in sortedPeriods" :key="p.id" class="period-history-item">
-              <div class="period-history-content">
-                <span class="period-history-range">
-                  {{ formatDateDisplay(p.startDate) }}{{ p.endDate ? ' ～ ' + formatDateDisplay(p.endDate) : ' ～ 进行中' }}
-                </span>
-                <span v-if="p.endDate" class="period-history-days">{{ diffDays(p.startDate, p.endDate, true) }} 天</span>
+            <van-swipe-cell
+              v-for="p in sortedPeriods"
+              :key="p.id"
+              :name="p.id"
+              :before-close="(e) => beforeCloseSwipe(e, p.id)"
+              class="period-swipe-cell"
+            >
+              <div class="period-history-item">
+                <div class="period-history-content">
+                  <span class="period-history-range">
+                    {{ formatDateDisplay(p.startDate) }}{{ p.endDate ? ' ～ ' + formatDateDisplay(p.endDate) : ' ～ 进行中' }}
+                  </span>
+                  <span v-if="p.endDate" class="period-history-days">{{ diffDays(p.startDate, p.endDate, true) }} 天</span>
+                </div>
               </div>
-              <van-button size="mini" plain class="period-history-delete-btn" @click="confirmDeletePeriod(p.id)">删掉</van-button>
-            </div>
+              <template #right>
+                <van-button square type="danger" text="删除" class="period-swipe-delete" />
+              </template>
+            </van-swipe-cell>
           </template>
           <van-empty v-else description="还没记过姨妈哦" image="default" class="period-empty" />
         </div>
@@ -97,9 +107,10 @@ const {
   formatDateDisplay,
 } = usePeriodRecords();
 
-function confirmDeletePeriod(id) {
+function beforeCloseSwipe({ position, name }) {
+  if (position !== 'right') return true;
   const color = getPrimaryColor();
-  showConfirmDialog({
+  return showConfirmDialog({
     title: '删掉这条？',
     message: '真要删掉这条呀？',
     showCancelButton: true,
@@ -107,8 +118,11 @@ function confirmDeletePeriod(id) {
     cancelButtonText: '算了',
     ...(color ? { confirmButtonColor: color } : {}),
   })
-    .then(() => deletePeriod(id))
-    .catch(() => {});
+    .then(() => {
+      deletePeriod(name);
+      return true;
+    })
+    .catch(() => true);
 }
 
 function onStart() {

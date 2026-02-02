@@ -1,21 +1,22 @@
 <template>
   <Teleport to="body">
-    <div
-      v-show="open"
-      ref="backdropRef"
-      class="modal-backdrop"
-      :class="{ 'theme-modal': !!title }"
-      role="dialog"
-      :aria-modal="open"
-      :aria-labelledby="title ? undefined : undefined"
-      @click.self="close"
-    >
+    <Transition name="modal-fade">
       <div
-        class="modal"
-        :class="resolvedInnerClass"
-        role="document"
-        @click.stop
+        v-show="open"
+        ref="backdropRef"
+        class="modal-backdrop"
+        :class="{ 'theme-modal': !!title }"
+        role="dialog"
+        :aria-modal="open"
+        :aria-labelledby="title ? undefined : undefined"
+        @click.self="close"
       >
+        <div
+          class="modal"
+          :class="resolvedInnerClass"
+          role="document"
+          @click.stop
+        >
         <template v-if="title">
           <div class="theme-modal-title" :id="titleId">{{ title }}</div>
         </template>
@@ -27,8 +28,9 @@
           aria-label="关闭"
           @click="close"
         />
+        </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -112,6 +114,23 @@ onUnmounted(() => {
 
 <style>
 /* 基础弹层样式（BaseModal 使用，随弹层 chunk 按需加载） */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+.modal-fade-enter-active .modal,
+.modal-fade-leave-active .modal {
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-from .modal,
+.modal-fade-leave-to .modal {
+  transform: scale(0.96);
+  opacity: 0;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;
