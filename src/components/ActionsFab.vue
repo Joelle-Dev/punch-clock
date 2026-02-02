@@ -19,6 +19,7 @@ import { useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { usePunchRecords } from '../composables/usePunchRecords';
 import { usePeriodRecords } from '../composables/usePeriodRecords';
+import { useAchievements } from '../composables/useAchievements';
 import { todayKey, formatDateDisplay, formatTime, diffDays } from '../utils/date';
 import { parsePunchCsv, parsePeriodCsv } from '../utils/csv';
 import { TYPE_LABELS } from '../constants';
@@ -47,6 +48,7 @@ const showFab = computed(() => isRecord.value || isPeriod.value);
 
 const { records, setRecords } = usePunchRecords();
 const { periodRecords, setPeriodRecords } = usePeriodRecords();
+const { clearUnlocked } = useAchievements();
 
 const sheetActions = computed(() => {
   if (isRecord.value) {
@@ -141,6 +143,7 @@ function clearPunch() {
     confirmButtonText: '清空',
     onConfirm: () => {
       setRecords([]);
+      clearUnlocked();
       showToast('清空啦');
     },
   });

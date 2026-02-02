@@ -113,6 +113,12 @@ export function useAchievements() {
     newlyUnlockedIds.value = [];
   }
 
+  function clearUnlocked() {
+    unlocked.value = [];
+    newlyUnlockedIds.value = [];
+    saveUnlocked([]);
+  }
+
   const unlockedList = computed(() => unlocked.value);
 
   /** 按分组整理成就列表，用于弹窗展示 */
@@ -132,6 +138,7 @@ export function useAchievements() {
     newlyUnlockedIds,
     checkAll,
     clearNewlyUnlocked,
+    clearUnlocked,
     loadUnlocked,
   };
 }
