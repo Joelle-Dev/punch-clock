@@ -84,6 +84,16 @@ export function usePeriodRecords() {
     savePeriodRecords(periodRecords.value);
   }
 
+  function addPeriodAt(startDateKey, endDateKey = null) {
+    const newPeriod = {
+      id: `p-${dayjs().valueOf()}-${Math.random().toString(36).slice(2, 6)}`,
+      startDate: startDateKey,
+      endDate: endDateKey,
+    };
+    periodRecords.value.push(newPeriod);
+    savePeriodRecords(periodRecords.value);
+  }
+
   function deletePeriod(id) {
     periodRecords.value = periodRecords.value.filter((p) => p.id !== id);
     savePeriodRecords(periodRecords.value);
@@ -102,6 +112,7 @@ export function usePeriodRecords() {
     startPeriod,
     endPeriod,
     endPreviousAndStart,
+    addPeriodAt,
     deletePeriod,
     setPeriodRecords,
     getCurrentOpenPeriod,

@@ -33,23 +33,29 @@
         <section v-for="group in dateGroups" :key="group.dateKey" class="record-date-section">
           <h2 class="record-date-title">{{ formatDateDisplay(group.dateKey) }}</h2>
           <div class="record-date-cards">
-            <div
+            <van-swipe-cell
               v-for="r in group.recs"
               :key="r.id"
-              class="record-card"
-              :class="'record-card--' + (r.type || 'other')"
+              :name="r.id"
+              :before-close="(e) => beforeCloseSwipe(e, r.id)"
+              class="record-swipe-cell"
             >
-              <span class="record-card-type">{{ getTypeLabel(r.type || 'other') }}</span>
-              <span class="record-card-time">{{ formatTime(r.timestamp) }}</span>
-              <van-button
-                size="mini"
-                plain
-                class="record-card-delete"
-                @click.stop="confirmDelete(r.id)"
+              <div
+                class="record-card"
+                :class="'record-card--' + (r.type || 'other')"
               >
-                删除
-              </van-button>
-            </div>
+                <span class="record-card-type">{{ getTypeLabel(r.type || 'other') }}</span>
+                <span class="record-card-time">{{ formatTime(r.timestamp) }}</span>
+              </div>
+              <template #right>
+                <van-button
+                  square
+                  type="danger"
+                  text="删除"
+                  class="record-swipe-delete"
+                />
+              </template>
+            </van-swipe-cell>
           </div>
         </section>
       </template>
@@ -68,9 +74,10 @@ import { getPrimaryColor } from '../utils/theme';
 const openActionsMenu = inject('openActionsMenu', () => {});
 const { records, deleteRecord, applyFilter } = usePunchRecords();
 
-function confirmDelete(id) {
+function beforeCloseSwipe({ position, name }) {
+  if (position !== 'right') return true;
   const color = getPrimaryColor();
-  showConfirmDialog({
+  return showConfirmDialog({
     title: '删掉这条？',
     message: '真要删掉这条呀？',
     showCancelButton: true,
@@ -78,8 +85,11 @@ function confirmDelete(id) {
     cancelButtonText: '算了',
     ...(color ? { confirmButtonColor: color } : {}),
   })
-    .then(() => deleteRecord(id))
-    .catch(() => {});
+    .then(() => {
+      deleteRecord(name);
+      return true;
+    })
+    .catch(() => true); /* 点击「算了」也收起滑条 */
 }
 
 const filter = ref('all');
@@ -271,6 +281,14 @@ function getTypeLabel(type) {
   box-shadow: var(--shadow-sm);
   border-left: 4px solid var(--primary);
 }
+.record-swipe-cell :deep(.van-swipe-cell__right) {
+  display: flex;
+  align-items: stretch;
+}
+.record-swipe-delete {
+  height: 100%;
+  min-width: 70px;
+}
 .record-card--toilet { border-left-color: var(--green); }
 .record-card--meal { border-left-color: var(--orange); }
 .record-card--fitness { border-left-color: var(--primary); }
@@ -285,16 +303,6 @@ function getTypeLabel(type) {
   flex: 1;
   font-size: 13px;
   color: var(--text-2);
-}
-.record-card-delete {
-  flex-shrink: 0;
-  --van-button-default-color: var(--red);
-  --van-button-default-border-color: var(--red);
-  color: var(--red) !important;
-  border-color: var(--red) !important;
-}
-.record-card-delete:active {
-  background: rgba(255, 59, 48, 0.08) !important;
 }
 .record-empty {
   padding: 40px 20px;
