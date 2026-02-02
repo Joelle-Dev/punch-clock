@@ -21,6 +21,7 @@ import { usePunchRecords } from '../composables/usePunchRecords';
 import { usePeriodRecords } from '../composables/usePeriodRecords';
 import { todayKey, formatDateDisplay, formatTime, diffDays } from '../utils/date';
 import { parsePunchCsv, parsePeriodCsv } from '../utils/csv';
+import { TYPE_LABELS } from '../constants';
 
 const props = defineProps({ show: { type: Boolean, default: undefined } });
 const emit = defineEmits(['update:show']);
@@ -146,8 +147,7 @@ function clearPunch() {
 }
 
 function getTypeLabel(type) {
-  const map = { toilet: '如厕', meal: '饭否', fitness: '健身', other: '其他' };
-  return map[type] || '其他';
+  return TYPE_LABELS[type] || TYPE_LABELS.other;
 }
 
 function exportPeriod() {

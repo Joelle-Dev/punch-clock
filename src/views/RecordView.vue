@@ -70,6 +70,7 @@ import { showConfirmDialog } from 'vant';
 import { usePunchRecords } from '../composables/usePunchRecords';
 import { formatDateDisplay, formatTime } from '../utils/date';
 import { getPrimaryColor } from '../utils/theme';
+import { TYPE_LABELS } from '../constants';
 
 const openActionsMenu = inject('openActionsMenu', () => {});
 const { records, deleteRecord, applyFilter } = usePunchRecords();
@@ -127,8 +128,7 @@ const dateGroups = computed(() => {
 });
 
 function getTypeLabel(type) {
-  const map = { toilet: '如厕', meal: '饭否', fitness: '健身', other: '其他' };
-  return map[type] || '其他';
+  return TYPE_LABELS[type] || TYPE_LABELS.other;
 }
 </script>
 

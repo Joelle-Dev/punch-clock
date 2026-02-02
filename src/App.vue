@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, computed, provide, watch, onMounted, defineAsyncComponent } from 'vue';
+import { ref, computed, provide, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { dayjs } from './utils/date';
@@ -68,10 +68,17 @@ function setUserName(name) {
     else localStorage.removeItem(USER_NAME_STORAGE_KEY);
   } catch (e) {}
 }
+
+function onThemeDayChange(e) {
+  bannerDayOverride.value = e.detail;
+}
+
 onMounted(() => {
-  window.addEventListener('theme-day-change', (e) => {
-    bannerDayOverride.value = e.detail;
-  });
+  window.addEventListener('theme-day-change', onThemeDayChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('theme-day-change', onThemeDayChange);
 });
 
 /* 弹层按需加载（打开时再加载对应 chunk） */

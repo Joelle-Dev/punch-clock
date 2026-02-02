@@ -79,7 +79,7 @@
 
 <script setup>
 import '../styles/punch.css';
-import { ref, computed, onMounted, inject } from 'vue';
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue';
 import { usePunchRecords } from '../composables/usePunchRecords';
 import { useAchievements } from '../composables/useAchievements';
 import { useDoubleTapHint } from '../composables/useDoubleTapHint';
@@ -89,11 +89,20 @@ import PunchSuccessModal from '../components/PunchSuccessModal.vue';
 
 const { records, todayCount, streak, lastRecord, addRecord, getMonthHeatmap } = usePunchRecords();
 const { unlockedList, achievements, checkAll } = useAchievements();
+
+const achievementMap = computed(() => {
+  const map = new Map();
+  achievements.forEach((a) => {
+    map.set(a.id, a);
+  });
+  return map;
+});
+
 const latestUnlockedTitle = computed(() => {
   const ids = unlockedList.value;
   if (!ids.length) return '';
   const lastId = ids[ids.length - 1];
-  const a = achievements.find((x) => x.id === lastId);
+  const a = achievementMap.value.get(lastId);
   return a?.title ?? '';
 });
 const openAchievementModal = inject('openAchievementModal', () => {});
@@ -178,16 +187,25 @@ function onPunch() {
   }, 0);
 }
 
+const onVisibilityChange = () => {
+  if (document.visibilityState === 'visible') refresh();
+};
+
+const onPageShow = (e) => {
+  if (e.persisted) refresh();
+};
+
 onMounted(() => {
   /** PWA 未关闭、次日再打卡时：切回前台时刷新「今日」等依赖当前日期的计算 */
   const refresh = () => {
     records.value = [...records.value];
   };
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refresh();
-  });
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) refresh();
-  });
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('pageshow', onPageShow);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange);
+  window.removeEventListener('pageshow', onPageShow);
 });
 </script>
