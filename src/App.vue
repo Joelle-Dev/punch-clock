@@ -17,6 +17,7 @@
     <ThemeModal v-if="themeModalOpen" v-model:open="themeModalOpen" />
     <AchievementModal v-if="achievementModalOpen" v-model:open="achievementModalOpen" />
     <RetroPunchModal v-if="retroPunchOpen" v-model:open="retroPunchOpen" />
+    <RetroPeriodModal v-if="retroPeriodOpen" v-model:open="retroPeriodOpen" />
   </div>
 </template>
 
@@ -54,10 +55,12 @@ onMounted(() => {
 const ThemeModal = defineAsyncComponent(() => import('./components/ThemeModal.vue'));
 const AchievementModal = defineAsyncComponent(() => import('./components/AchievementModal.vue'));
 const RetroPunchModal = defineAsyncComponent(() => import('./components/RetroPunchModal.vue'));
+const RetroPeriodModal = defineAsyncComponent(() => import('./components/RetroPeriodModal.vue'));
 
 const themeModalOpen = ref(false);
 const achievementModalOpen = ref(false);
 const retroPunchOpen = ref(false);
+const retroPeriodOpen = ref(false);
 const route = useRoute();
 const showActionsMenu = ref(false);
 watch(() => route.path, (path) => {
@@ -71,6 +74,7 @@ provide('openActionsMenu', () => { showActionsMenu.value = true; });
 provide('openThemeModal', () => { themeModalOpen.value = true; });
 provide('openAchievementModal', () => { achievementModalOpen.value = true; });
 provide('openRetroPunchModal', () => { retroPunchOpen.value = true; });
+provide('openRetroPeriodModal', () => { retroPeriodOpen.value = true; });
 provide('showAchievementToast', (achievement) => {
   showToast({
     message: achievement ? '哇！' + achievement.title : '',

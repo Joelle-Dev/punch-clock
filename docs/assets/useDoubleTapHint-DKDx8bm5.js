@@ -1,1 +1,0 @@
-import{av as r,r as u}from"./index-BtTNhxWS.js";const l=5*60*1e3,c=["打上瘾了？","再打要收费了～","手下留情～"];function T(s={}){const n=s.windowMs??l,o=s.messages??c,e=u(0);function a(){const t=Date.now();return t-e.value<n&&o.length>0?(r(o[Math.floor(Math.random()*o.length)]),!0):(e.value=t,!1)}return{shouldSkipDueToDoubleTap:a}}export{T as u};

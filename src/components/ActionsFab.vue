@@ -38,6 +38,7 @@ const punchFileRef = ref(null);
 const periodFileRef = ref(null);
 const openConfirm = inject('openConfirm', (opts) => { if (opts?.onConfirm && confirm(opts.message)) opts.onConfirm(); });
 const openRetroPunchModal = inject('openRetroPunchModal', () => {});
+const openRetroPeriodModal = inject('openRetroPeriodModal', () => {});
 
 const isRecord = computed(() => route.path === '/record');
 const isPeriod = computed(() => route.path === '/period');
@@ -57,6 +58,7 @@ const sheetActions = computed(() => {
   }
   if (isPeriod.value) {
     return [
+      { name: '补一下～', key: 'retroPeriod' },
       { name: '导出数据', key: 'exportPeriod' },
       { name: '导入数据', key: 'importPeriod' },
       { name: '清空姨妈记', key: 'clearPeriod', color: '#ee0a24' },
@@ -71,6 +73,7 @@ function closeMenu() {
 
 function onSheetSelect({ key }) {
   if (key === 'retro') openRetroPunchModal();
+  else if (key === 'retroPeriod') openRetroPeriodModal();
   else if (key === 'exportPunch') exportPunch();
   else if (key === 'importPunch') triggerImport();
   else if (key === 'clearPunch') clearPunch();

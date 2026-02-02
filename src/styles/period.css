@@ -223,6 +223,17 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.period-swipe-cell :deep(.van-swipe-cell__right) {
+  display: flex;
+  align-items: stretch;
+}
+.period-swipe-delete {
+  height: 100%;
+  min-width: 70px;
 }
 .period-history-item {
   display: flex;
@@ -232,7 +243,6 @@
   padding: 12px 14px;
   background: var(--surface);
   border-radius: var(--radius);
-  margin-bottom: 6px;
   box-shadow: var(--shadow-sm);
   border-left: 4px solid var(--primary-soft);
 }
@@ -251,16 +261,6 @@
 .period-history-days {
   font-size: 12px;
   color: var(--text-3);
-}
-.period-history-delete-btn.van-button {
-  flex-shrink: 0;
-  --van-button-default-color: var(--red);
-  --van-button-default-border-color: var(--red);
-  color: var(--red) !important;
-  border-color: var(--red) !important;
-}
-.period-history-delete-btn.van-button:active {
-  background: rgba(255, 59, 48, 0.08) !important;
 }
 .period-empty.van-empty {
   padding: 40px 20px;
