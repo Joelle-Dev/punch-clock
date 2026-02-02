@@ -183,16 +183,28 @@ const punchButtonAriaLabel = computed(() => {
 });
 
 const lastPunchDisplay = computed(() => {
-  if (!lastRecord.value) {
+  // 如果今天没有打卡，显示提示信息
+  if (todayCount.value === 0) {
     return { hasRecord: false, text: '今天还没打过我哦' };
   }
-  const r = lastRecord.value;
-  const typeTab = typeTabs.find((t) => t.type === (r.type || 'other'));
+
+  // 获取今天的所有记录，取时间戳最大的一条（最后一次打卡）
+  const todayKey = dayjs().format('YYYY-MM-DD');
+  const todayRecords = records.value.filter((r) => r.dateKey === todayKey);
+  if (!todayRecords.length) {
+    return { hasRecord: false, text: '今天还没打过我哦' };
+  }
+
+  const lastTodayRecord = todayRecords.reduce((max, r) =>
+    r.timestamp > max.timestamp ? r : max
+  );
+  const typeTab = typeTabs.find((t) => t.type === (lastTodayRecord.type || 'other'));
+
   return {
     hasRecord: true,
     typeLabel: typeTab?.label ?? '其他',
-    dateDisplay: formatDateDisplay(r.dateKey),
-    timeDisplay: formatTime(r.timestamp),
+    dateDisplay: formatDateDisplay(lastTodayRecord.dateKey),
+    timeDisplay: formatTime(lastTodayRecord.timestamp),
   };
 });
 
