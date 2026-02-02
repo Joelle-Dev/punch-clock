@@ -1,0 +1,9 @@
+export { default as ToiletIcon } from './ToiletIcon.vue';
+export { default as MealIcon } from './MealIcon.vue';
+export { default as FitnessIcon } from './FitnessIcon.vue';
+export { default as OtherIcon } from './OtherIcon.vue';
+export { default as ProfileIcon } from './ProfileIcon.vue';
+export { default as ThemeIcon } from './ThemeIcon.vue';
+export { default as HelpIcon } from './HelpIcon.vue';
+export { default as InfoIcon } from './InfoIcon.vue';
+export { default as UpdateIcon } from './UpdateIcon.vue';

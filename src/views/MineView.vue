@@ -9,7 +9,9 @@
         <van-cell-group :border="false">
           <van-cell title="我的名字" is-link @click="openNameEdit">
             <template #icon>
-              <span class="mine-cell-icon" aria-hidden="true">✏️</span>
+              <span class="mine-cell-icon" aria-hidden="true">
+                <ProfileIcon :size="30" variant="cell" />
+              </span>
             </template>
             <template #value>
               <span class="mine-cell-value">{{ displayUserName }}</span>
@@ -17,17 +19,23 @@
           </van-cell>
           <van-cell title="主题颜色" is-link @click="openTheme">
             <template #icon>
-              <span class="mine-cell-icon" aria-hidden="true">🎨</span>
+              <span class="mine-cell-icon" aria-hidden="true">
+                <ThemeIcon :size="30" />
+              </span>
             </template>
           </van-cell>
           <van-cell title="使用帮助" is-link @click="openHelp">
             <template #icon>
-              <span class="mine-cell-icon" aria-hidden="true">❓</span>
+              <span class="mine-cell-icon" aria-hidden="true">
+                <HelpIcon :size="30" />
+              </span>
             </template>
           </van-cell>
           <van-cell title="关于" is-link @click="openAbout">
             <template #icon>
-              <span class="mine-cell-icon" aria-hidden="true">ℹ️</span>
+              <span class="mine-cell-icon" aria-hidden="true">
+                <InfoIcon :size="30" />
+              </span>
             </template>
           </van-cell>
           <van-cell
@@ -37,7 +45,9 @@
             @click="checkForUpdate"
           >
             <template #icon>
-              <span class="mine-cell-icon" aria-hidden="true">🔄</span>
+              <span class="mine-cell-icon" aria-hidden="true">
+                <UpdateIcon :size="30" />
+              </span>
             </template>
           </van-cell>
         </van-cell-group>
@@ -91,6 +101,7 @@
 <script setup>
 import { ref, inject, computed } from 'vue';
 import { showToast } from 'vant';
+import { ProfileIcon, ThemeIcon, HelpIcon, InfoIcon, UpdateIcon } from '../components/icons';
 
 const DEFAULT_DISPLAY_NAME = '潘秋瑾';
 const userName = inject('userName', ref(''));

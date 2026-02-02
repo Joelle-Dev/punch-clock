@@ -11,6 +11,7 @@
 
 <script setup>
 import { h } from 'vue';
+import { ProfileIcon } from './icons';
 
 const tabs = [
   {
@@ -46,12 +47,7 @@ const tabs = [
   {
     path: '/mine',
     label: '我呀',
-    icon: () =>
-      h('svg', { viewBox: '0 0 24 24', fill: 'currentColor', width: 26, height: 26 }, [
-        h('path', {
-          d: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-        }),
-      ]),
+    icon: () => h(ProfileIcon, { size: 30, variant: 'tab' }),
   },
 ];
 </script>
