@@ -98,6 +98,7 @@ const latestUnlockedTitle = computed(() => {
 });
 const openAchievementModal = inject('openAchievementModal', () => {});
 const showAchievementToast = inject('showAchievementToast', () => {});
+const userName = inject('userName', ref(''));
 
 const validTypes = ['toilet', 'meal', 'fitness', 'other'];
 const currentType = ref(
@@ -161,7 +162,7 @@ const heatmapCells = computed(() => {
 
 function onPunch() {
   if (shouldSkipDueToDoubleTap(currentType.value)) return;
-  punchSuccessMessage.value = getPraiseMessage(currentType.value);
+  punchSuccessMessage.value = getPraiseMessage(currentType.value, userName.value && userName.value.trim() ? userName.value.trim() : '秋瑾');
   punchSuccessOpen.value = true;
   addRecord(currentType.value);
   bounce.value = true;

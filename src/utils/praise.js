@@ -1,12 +1,14 @@
-export function getPraiseMessage(type) {
+/** @param {string} [name] 用户名字，未传或空时用「秋瑾」 */
+export function getPraiseMessage(type, name) {
+  const n = name && String(name).trim() ? String(name).trim() : '秋瑾';
   switch (type) {
     case 'toilet':
-      return '秋瑾又拉粑粑啦～';
+      return n + '又拉粑粑啦～';
     case 'meal':
-      return '秋瑾真乖，吃饭香香～';
+      return n + '真乖，吃饭香香～';
     case 'fitness':
-      return '秋瑾威武，茁壮成长～';
+      return n + '威武，茁壮成长～';
     default:
-      return '秋瑾真棒～';
+      return n + '真棒～';
   }
 }

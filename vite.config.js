@@ -21,9 +21,9 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icon-192.png.jpg', 'icon-512.png.jpg'],
       manifest: {
-        name: '潘秋瑾打卡',
-        short_name: '秋瑾打卡',
-        description: '送给潘秋瑾的专属打卡小本本',
+        name: '打我小本本',
+        short_name: '打卡',
+        description: '轻量级打卡记录应用',
         theme_color: '#4F46E5',
         background_color: '#F9FAFB', // 淡灰背景，避免黑屏
         display: 'standalone',

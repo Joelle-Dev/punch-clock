@@ -29,22 +29,45 @@ import { dayjs } from './utils/date';
 import ActionsFab from './components/ActionsFab.vue';
 import TabBar from './components/TabBar.vue';
 import { useConfirm } from './composables/useConfirm';
+import { USER_NAME_STORAGE_KEY } from './constants';
 
-/* 头部文案按星期：0=周日 … 6=周六，调试见 main.js __applyDay(N) */
-const BANNER_BY_DAY = [
-  '潘秋瑾，周日愉快 ✨',
-  '潘秋瑾，新的一周，加油呀 ✨',
-  '潘秋瑾，你今天真好看 ✨',
-  '潘秋瑾，周三也要开心 ✨',
-  '潘秋瑾，今天也是闪闪发光的一天 ✨',
-  '潘秋瑾，周五了，周末见 ✨',
-  '潘秋瑾，周末快乐 ✨',
+const DEFAULT_NAME = '潘秋瑾';
+const BANNER_SUFFIX_BY_DAY = [
+  '周日愉快 ✨',
+  '新的一周，加油呀 ✨',
+  '你今天真好看 ✨',
+  '周三也要开心 ✨',
+  '今天也是闪闪发光的一天 ✨',
+  '周五了，周末见 ✨',
+  '周末快乐 ✨',
 ];
+
+function loadUserName() {
+  try {
+    const v = localStorage.getItem(USER_NAME_STORAGE_KEY);
+    return typeof v === 'string' && v.trim() ? v.trim() : '';
+  } catch (e) {
+    return '';
+  }
+}
+
+const userName = ref(loadUserName());
 const bannerDayOverride = ref(null);
 const bannerText = computed(() => {
+  const name = userName.value || DEFAULT_NAME;
   const day = bannerDayOverride.value !== null ? bannerDayOverride.value : dayjs().day();
-  return BANNER_BY_DAY[day] ?? BANNER_BY_DAY[2];
+  const suffix = BANNER_SUFFIX_BY_DAY[day] ?? BANNER_SUFFIX_BY_DAY[2];
+  return name + '，' + suffix;
 });
+
+function setUserName(name) {
+  const v = typeof name === 'string' ? name.trim() : '';
+  userName.value = v;
+  try {
+    if (v) localStorage.setItem(USER_NAME_STORAGE_KEY, v);
+    else localStorage.removeItem(USER_NAME_STORAGE_KEY);
+  } catch (e) {}
+}
 onMounted(() => {
   window.addEventListener('theme-day-change', (e) => {
     bannerDayOverride.value = e.detail;
@@ -71,6 +94,8 @@ const { openConfirm } = useConfirm();
 
 provide('openConfirm', openConfirm);
 provide('openActionsMenu', () => { showActionsMenu.value = true; });
+provide('userName', userName);
+provide('setUserName', setUserName);
 provide('openThemeModal', () => { themeModalOpen.value = true; });
 provide('openAchievementModal', () => { achievementModalOpen.value = true; });
 provide('openRetroPunchModal', () => { retroPunchOpen.value = true; });

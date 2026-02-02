@@ -21,7 +21,7 @@
     <style>html,body{background:#fff !important;}</style>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="秋瑾打卡">
+    <meta name="apple-mobile-web-app-title" content="打卡">
     <title>打卡记录</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
     <link rel="apple-touch-icon" href="./assets/icon-512.png-DyqibrUp.jpg">
@@ -41,7 +41,7 @@
         .splash-title { font-size: 20px; color: var(--splash-primary); margin-bottom: 8px; font-weight: 600; }
         .splash-subtitle { font-size: 14px; color: var(--splash-primary); opacity: 0.85; }
     </style>
-  <script type="module" crossorigin src="./assets/index-BraOb1rX.js"></script>
+  <script type="module" crossorigin src="./assets/index-QHLLLVjm.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-D78_gjxg.css">
 <link rel="manifest" href="./manifest.webmanifest"></head>
 <body>
@@ -49,6 +49,16 @@
         <div class="splash-title">潘秋瑾</div>
         <div class="splash-subtitle">奥利给yo！～</div>
     </div>
+    <script>
+      (function(){
+        var el = document.querySelector('.splash-title');
+        if (!el) return;
+        try {
+          var n = localStorage.getItem('punch_user_name_v1');
+          el.textContent = (n && typeof n === 'string' && n.trim()) ? n.trim() : '潘秋瑾';
+        } catch (e) {}
+      })();
+    </script>
     <div id="app"></div>
 </body>
 </html>

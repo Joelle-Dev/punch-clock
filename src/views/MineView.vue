@@ -7,6 +7,14 @@
     <main class="mine-main">
       <section class="mine-card" aria-label="设置">
         <van-cell-group :border="false">
+          <van-cell title="我的名字" is-link @click="openNameEdit">
+            <template #icon>
+              <span class="mine-cell-icon" aria-hidden="true">✏️</span>
+            </template>
+            <template #value>
+              <span class="mine-cell-value">{{ displayUserName }}</span>
+            </template>
+          </van-cell>
           <van-cell title="主题颜色" is-link @click="openTheme">
             <template #icon>
               <span class="mine-cell-icon" aria-hidden="true">🎨</span>
@@ -52,12 +60,65 @@
         </van-button>
       </div>
     </van-popup>
+
+    <!-- 我的名字编辑 -->
+    <van-popup
+      v-model:show="nameEditOpen"
+      position="center"
+      round
+      class="name-edit-popup"
+      :style="{ width: '85%', maxWidth: '320px' }"
+    >
+      <div class="name-edit-inner">
+        <h3 class="name-edit-title">我的名字</h3>
+        <van-field
+          v-model="nameEditValue"
+          placeholder="输入你的名字～"
+          maxlength="6"
+          show-word-limit
+          clearable
+          class="name-edit-field"
+        />
+        <div class="name-edit-actions">
+          <van-button block round class="name-edit-btn" @click="resetName">重置为默认</van-button>
+          <van-button type="primary" block round class="name-edit-btn" @click="saveName">保存</van-button>
+        </div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup>
 import { ref, inject, computed } from 'vue';
 import { showToast } from 'vant';
+
+const DEFAULT_DISPLAY_NAME = '潘秋瑾';
+const userName = inject('userName', ref(''));
+const setUserName = inject('setUserName', () => {});
+
+const displayUserName = computed(() => (userName.value && userName.value.trim()) ? userName.value.trim() : DEFAULT_DISPLAY_NAME);
+
+const nameEditOpen = ref(false);
+const nameEditValue = ref('');
+
+function openNameEdit() {
+  nameEditValue.value = (userName.value && userName.value.trim()) ? userName.value.trim() : '';
+  nameEditOpen.value = true;
+}
+
+function saveName() {
+  const v = nameEditValue.value ? nameEditValue.value.trim() : '';
+  setUserName(v);
+  nameEditOpen.value = false;
+  showToast(v ? '保存啦～' : '已清空，将使用默认名字');
+}
+
+function resetName() {
+  nameEditValue.value = '';
+  setUserName('');
+  nameEditOpen.value = false;
+  showToast('已重置为默认名字～');
+}
 
 const openThemeModal = inject('openThemeModal', () => {});
 
@@ -75,11 +136,14 @@ const contentOpen = ref(false);
 const contentTitle = ref('');
 const contentHtml = ref('');
 
-const ABOUT_HTML = `
-  <p class="tip-line tip-intro">秋瑾宝宝专属「打我」小本本</p>
+function getAboutHtml(displayName) {
+  const name = displayName && displayName.trim() ? displayName.trim() : '潘秋瑾';
+  return `
+  <p class="tip-line tip-intro">${name}宝宝专属「打我」小本本</p>
   <p class="tip-line tip-desc">记下每一个美好瞬间 ✨</p>
   <p class="tip-line tip-version">版本 1.0.0</p>
 `;
+}
 
 const HELP_HTML = `
   <div class="tip-section">
@@ -114,7 +178,7 @@ function openTheme() {
 
 function openAbout() {
   contentTitle.value = '关于';
-  contentHtml.value = ABOUT_HTML;
+  contentHtml.value = getAboutHtml(displayUserName.value);
   contentOpen.value = true;
 }
 
@@ -179,6 +243,34 @@ function openHelp() {
   font-size: 22px;
   margin-right: 12px;
   line-height: 1;
+}
+.mine-cell-value {
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+/* ---------- 我的名字编辑弹层 ---------- */
+.name-edit-inner {
+  padding: 20px 20px 16px;
+  background: var(--surface);
+}
+.name-edit-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 16px;
+  text-align: center;
+}
+.name-edit-field {
+  margin-bottom: 12px;
+}
+.name-edit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.name-edit-btn {
+  margin: 0;
 }
 
 /* ---------- 关于/使用帮助弹层 ---------- */
