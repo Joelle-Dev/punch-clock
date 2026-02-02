@@ -22,6 +22,29 @@
               <span class="mine-cell-icon" aria-hidden="true">ℹ️</span>
             </template>
           </van-cell>
+<<<<<<< Updated upstream
+=======
+          <van-cell
+            v-if="hasServiceWorker"
+            title="检查更新"
+            is-link
+            @click="checkForUpdate"
+          >
+            <template #icon>
+              <span class="mine-cell-icon" aria-hidden="true">🔄</span>
+            </template>
+          </van-cell>
+          <van-cell
+            v-if="hasBannerApiFeature"
+            title="编辑头部文案"
+            is-link
+            @click="openBannerEdit"
+          >
+            <template #icon>
+              <span class="mine-cell-icon" aria-hidden="true">✏️</span>
+            </template>
+          </van-cell>
+>>>>>>> Stashed changes
         </van-cell-group>
       </section>
     </main>
@@ -42,14 +65,78 @@
         </van-button>
       </div>
     </van-popup>
+
+    <!-- 管理员 token 校验（编辑头部文案） -->
+    <van-popup
+      v-model:show="adminTokenOpen"
+      position="center"
+      round
+      class="tip-popup admin-token-popup"
+      :z-index="9999"
+    >
+      <div class="tip-popup-inner">
+        <h3 class="tip-popup-title">管理员</h3>
+        <van-field
+          v-model="adminTokenInput"
+          type="password"
+          placeholder="请输入管理员 token"
+          class="admin-token-field"
+        />
+        <van-button type="primary" block round class="tip-modal-btn tip-modal-btn-theme" @click="confirmAdminToken">
+          确认
+        </van-button>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup>
+<<<<<<< Updated upstream
 import { ref, inject } from 'vue';
+=======
+import { ref, inject, computed } from 'vue';
+import { showToast } from 'vant';
+import { hasBannerApi, getAdminToken } from '../utils/bannerApi';
+>>>>>>> Stashed changes
 
 const openThemeModal = inject('openThemeModal', () => {});
+const openBannerEditModal = inject('openBannerEditModal', () => {});
 
+<<<<<<< Updated upstream
+=======
+const hasBannerApiFeature = computed(() => hasBannerApi());
+const hasServiceWorker = computed(() => typeof navigator !== 'undefined' && 'serviceWorker' in navigator);
+
+const adminTokenOpen = ref(false);
+const adminTokenInput = ref('');
+
+function openBannerEdit() {
+  if (getAdminToken()) {
+    adminTokenInput.value = '';
+    adminTokenOpen.value = true;
+  } else {
+    openBannerEditModal();
+  }
+}
+
+function confirmAdminToken() {
+  if (adminTokenInput.value === getAdminToken()) {
+    adminTokenOpen.value = false;
+    openBannerEditModal();
+  } else {
+    showToast('管理员 token 错误');
+  }
+}
+
+function checkForUpdate() {
+  if (!hasServiceWorker.value) return;
+  navigator.serviceWorker.getRegistration().then((reg) => {
+    if (reg) reg.update();
+    showToast('正在检查更新，如有新版本将提示刷新');
+  });
+}
+
+>>>>>>> Stashed changes
 const contentOpen = ref(false);
 const contentTitle = ref('');
 const contentHtml = ref('');
@@ -77,6 +164,17 @@ const HELP_HTML = `
     <p class="tip-section-title">主题颜色</p>
     <p class="tip-line">上方「主题颜色」可自选颜色；在弹层中点击「重置为按星期自动」可恢复按星期（日～六）自动切换主题。</p>
   </div>
+<<<<<<< Updated upstream
+=======
+  <div class="tip-section">
+    <p class="tip-section-title">检查更新</p>
+    <p class="tip-line">从主屏幕打开时，点「检查更新」可主动检查是否有新版本；若有会弹出「发现新版本，请刷新」提示，点刷新即可。</p>
+  </div>
+  <div class="tip-section">
+    <p class="tip-section-title">编辑头部文案</p>
+    <p class="tip-line">配置远程 API 后，管理员可在「编辑头部文案」中修改顶部文案，对方会通过 WebSocket 实时看到，无需刷新。</p>
+  </div>
+>>>>>>> Stashed changes
 `;
 
 function openTheme() {
@@ -164,6 +262,7 @@ function openHelp() {
   background: linear-gradient(165deg, #fffaf8 0%, #fff 40%, #f8fafc 100%);
   box-shadow: 0 12px 40px rgba(80, 60, 40, 0.12);
 }
+.admin-token-popup .admin-token-field { margin-bottom: 12px; }
 .tip-popup-title {
   font-size: 17px;
   font-weight: 600;
