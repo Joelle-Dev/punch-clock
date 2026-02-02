@@ -13,6 +13,7 @@
         <div class="stat-card stat-card-achievement" @click="openAchievementModal">
           <span class="stat-value">{{ unlockedList.length }}</span>
           <span class="stat-label">成就</span>
+          <span v-if="latestUnlockedTitle" class="stat-achievement-hint">{{ latestUnlockedTitle }}</span>
         </div>
       </div>
     </header>
@@ -87,7 +88,14 @@ import { getPraiseMessage } from '../utils/praise';
 import PunchSuccessModal from '../components/PunchSuccessModal.vue';
 
 const { records, todayCount, streak, lastRecord, addRecord, getMonthHeatmap } = usePunchRecords();
-const { unlockedList, checkAll } = useAchievements();
+const { unlockedList, achievements, checkAll } = useAchievements();
+const latestUnlockedTitle = computed(() => {
+  const ids = unlockedList.value;
+  if (!ids.length) return '';
+  const lastId = ids[ids.length - 1];
+  const a = achievements.find((x) => x.id === lastId);
+  return a?.title ?? '';
+});
 const openAchievementModal = inject('openAchievementModal', () => {});
 const showAchievementToast = inject('showAchievementToast', () => {});
 

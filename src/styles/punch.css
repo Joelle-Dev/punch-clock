@@ -61,6 +61,17 @@
     margin-top: 1px;
 }
 
+.punch-panel .stat-card .stat-achievement-hint {
+    display: block;
+    font-size: 10px;
+    color: var(--text-3);
+    margin-top: 2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* ===== 本月打卡热力图 ===== */
 .punch-panel .heatmap-section {
     margin-bottom: 14px;

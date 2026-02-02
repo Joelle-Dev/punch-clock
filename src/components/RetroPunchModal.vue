@@ -51,9 +51,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject } from 'vue';
 import BaseModal from './BaseModal.vue';
 import { usePunchRecords } from '../composables/usePunchRecords';
+import { useAchievements } from '../composables/useAchievements';
 import { useDoubleTapHint } from '../composables/useDoubleTapHint';
 import { dayjs, todayKey } from '../utils/date';
 
@@ -65,7 +66,9 @@ const open = computed({
   set: (v) => emit('update:open', v),
 });
 
-const { addRecordAt } = usePunchRecords();
+const { records, addRecordAt } = usePunchRecords();
+const { checkAll } = useAchievements();
+const showAchievementToast = inject('showAchievementToast', () => {});
 const { shouldSkipDueToDoubleTap } = useDoubleTapHint({
   messages: ['补上瘾啦？', '再补要收小费啦～', '手下留情嘛～'],
 });
@@ -135,6 +138,11 @@ function onSubmit() {
   if (!d.isValid()) return;
   addRecordAt(d, currentType.value);
   emit('update:open', false);
+  /* 补录后也检查成就，与「打我」一致 */
+  setTimeout(() => {
+    const newly = checkAll(records.value);
+    newly.forEach((a) => showAchievementToast(a));
+  }, 0);
 }
 </script>
 

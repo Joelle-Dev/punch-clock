@@ -87,6 +87,10 @@ const HELP_HTML = `
     <p class="tip-line">选类型点「打我」，可看今日次数、连续、成就和本月热力图。</p>
   </div>
   <div class="tip-section">
+    <p class="tip-section-title">成就</p>
+    <p class="tip-line">每次点「打我」后会自动检查，达成条件即解锁～</p>
+  </div>
+  <div class="tip-section">
     <p class="tip-section-title">小本本</p>
     <p class="tip-line">看记录、按时间/类型筛选，左滑删除。右上 ⋯ 可补一下～、导出/导入/清空。</p>
   </div>
