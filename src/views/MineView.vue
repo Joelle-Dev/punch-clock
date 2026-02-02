@@ -88,7 +88,7 @@ const HELP_HTML = `
   </div>
   <div class="tip-section">
     <p class="tip-section-title">小本本</p>
-    <p class="tip-line">底部「小本本」tab 可看全部记录，按时间、类型筛选，单条可删掉（有二次确认）。标题栏右侧 ⋯ 可补一刀、导出/导入/清空数据。</p>
+    <p class="tip-line">底部「小本本」tab 可看全部记录，按时间、类型筛选，单条可删掉（有二次确认）。标题栏右侧 ⋯ 可补一下～、导出/导入/清空数据。</p>
   </div>
   <div class="tip-section">
     <p class="tip-section-title">姨妈记</p>

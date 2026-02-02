@@ -152,7 +152,7 @@ const heatmapCells = computed(() => {
 
 
 function onPunch() {
-  if (shouldSkipDueToDoubleTap()) return;
+  if (shouldSkipDueToDoubleTap(currentType.value)) return;
   punchSuccessMessage.value = getPraiseMessage(currentType.value);
   punchSuccessOpen.value = true;
   addRecord(currentType.value);

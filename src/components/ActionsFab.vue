@@ -49,7 +49,7 @@ const { periodRecords, setPeriodRecords } = usePeriodRecords();
 const sheetActions = computed(() => {
   if (isRecord.value) {
     return [
-      { name: '补一刀', key: 'retro' },
+      { name: '补一下～', key: 'retro' },
       { name: '导出数据', key: 'exportPunch' },
       { name: '导入数据', key: 'importPunch' },
       { name: '清空小本本', key: 'clearPunch', color: '#ee0a24' },

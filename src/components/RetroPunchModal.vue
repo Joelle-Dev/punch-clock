@@ -1,6 +1,6 @@
 <template>
-  <BaseModal v-model:open="open" title="补一刀">
-    <p class="retro-punch-hint">选一下忘打我的那天、时间和类型</p>
+  <BaseModal v-model:open="open" title="补一下～">
+    <p class="retro-punch-hint">选一下忘打我的那天、时间和类型呀～</p>
 
     <van-field
       :model-value="dateDisplay"
@@ -45,7 +45,7 @@
       </van-tabs>
     </div>
     <van-button type="primary" block round class="retro-punch-submit" @click="onSubmit">
-      补录
+      补上～
     </van-button>
   </BaseModal>
 </template>
@@ -54,6 +54,7 @@
 import { ref, computed, watch } from 'vue';
 import BaseModal from './BaseModal.vue';
 import { usePunchRecords } from '../composables/usePunchRecords';
+import { useDoubleTapHint } from '../composables/useDoubleTapHint';
 import { dayjs, todayKey } from '../utils/date';
 
 const props = defineProps({ open: Boolean });
@@ -66,7 +67,7 @@ const open = computed({
 
 const { addRecordAt } = usePunchRecords();
 const { shouldSkipDueToDoubleTap } = useDoubleTapHint({
-  messages: ['补录上瘾了？', '再补要收费了～', '手下留情～'],
+  messages: ['补上瘾啦？', '再补要收小费啦～', '手下留情嘛～'],
 });
 
 const typeTabs = [
