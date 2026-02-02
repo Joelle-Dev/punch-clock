@@ -73,13 +73,18 @@
 <script setup>
 import '../styles/period.css';
 import { inject } from 'vue';
-import { showConfirmDialog } from 'vant';
+import { showConfirmDialog, showToast } from 'vant';
 import { dayjs, todayKey, diffDays } from '../utils/date';
 import { getPrimaryColor } from '../utils/theme';
 import { usePeriodRecords } from '../composables/usePeriodRecords';
+import { useDoubleTapHint } from '../composables/useDoubleTapHint';
 
 const openConfirm = inject('openConfirm', (opts) => { if (opts?.onConfirm && confirm(opts.message)) opts.onConfirm(); });
 const openActionsMenu = inject('openActionsMenu', () => {});
+
+const { shouldSkipDueToDoubleTap } = useDoubleTapHint({
+  messages: ['记上瘾了？', '手下留情～', '再记要收费了～'],
+});
 
 const {
   openPeriod,
@@ -107,20 +112,27 @@ function confirmDeletePeriod(id) {
 }
 
 function onStart() {
+  if (shouldSkipDueToDoubleTap()) return;
   const key = todayKey();
   if (openPeriod.value) {
     const yesterdayKey = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
     openConfirm({
       title: '开始新一轮',
       message: '上一轮还没点「结束了」，会先帮你把上轮结束日算昨天，再记这次。确定？',
-      onConfirm: () => endPreviousAndStart(yesterdayKey, key),
+      onConfirm: () => {
+        endPreviousAndStart(yesterdayKey, key);
+        showToast('记好啦');
+      },
     });
   } else {
     startPeriod();
+    showToast('记好啦');
   }
 }
 
 function onEnd() {
+  if (shouldSkipDueToDoubleTap()) return;
   endPeriod();
+  showToast('记好啦');
 }
 </script>

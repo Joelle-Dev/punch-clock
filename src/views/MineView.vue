@@ -22,8 +22,11 @@
               <span class="mine-cell-icon" aria-hidden="true">ℹ️</span>
             </template>
           </van-cell>
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> master
           <van-cell
             v-if="hasServiceWorker"
             title="检查更新"
@@ -34,6 +37,7 @@
               <span class="mine-cell-icon" aria-hidden="true">🔄</span>
             </template>
           </van-cell>
+<<<<<<< HEAD
           <van-cell
             v-if="hasBannerApiFeature"
             title="编辑头部文案"
@@ -45,6 +49,8 @@
             </template>
           </van-cell>
 >>>>>>> Stashed changes
+=======
+>>>>>>> master
         </van-cell-group>
       </section>
     </main>
@@ -91,6 +97,7 @@
 </template>
 
 <script setup>
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 import { ref, inject } from 'vue';
 =======
@@ -98,6 +105,10 @@ import { ref, inject, computed } from 'vue';
 import { showToast } from 'vant';
 import { hasBannerApi, getAdminToken } from '../utils/bannerApi';
 >>>>>>> Stashed changes
+=======
+import { ref, inject, computed } from 'vue';
+import { showToast } from 'vant';
+>>>>>>> master
 
 const openThemeModal = inject('openThemeModal', () => {});
 const openBannerEditModal = inject('openBannerEditModal', () => {});
@@ -136,7 +147,20 @@ function checkForUpdate() {
   });
 }
 
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+const hasServiceWorker = computed(() => typeof navigator !== 'undefined' && 'serviceWorker' in navigator);
+
+function checkForUpdate() {
+  if (!hasServiceWorker.value) return;
+  navigator.serviceWorker.getRegistration().then((reg) => {
+    if (reg) reg.update();
+    showToast('正在检查更新，如有新版本将提示刷新');
+  });
+}
+
+>>>>>>> master
 const contentOpen = ref(false);
 const contentTitle = ref('');
 const contentHtml = ref('');
@@ -164,17 +188,23 @@ const HELP_HTML = `
     <p class="tip-section-title">主题颜色</p>
     <p class="tip-line">上方「主题颜色」可自选颜色；在弹层中点击「重置为按星期自动」可恢复按星期（日～六）自动切换主题。</p>
   </div>
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> master
   <div class="tip-section">
     <p class="tip-section-title">检查更新</p>
     <p class="tip-line">从主屏幕打开时，点「检查更新」可主动检查是否有新版本；若有会弹出「发现新版本，请刷新」提示，点刷新即可。</p>
   </div>
+<<<<<<< HEAD
   <div class="tip-section">
     <p class="tip-section-title">编辑头部文案</p>
     <p class="tip-line">配置远程 API 后，管理员可在「编辑头部文案」中修改顶部文案，对方会通过 WebSocket 实时看到，无需刷新。</p>
   </div>
 >>>>>>> Stashed changes
+=======
+>>>>>>> master
 `;
 
 function openTheme() {

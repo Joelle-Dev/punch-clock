@@ -2,12 +2,35 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import { initTheme } from './composables/useTheme';
+import { getPrimaryColor } from './utils/theme';
+import { showConfirmDialog } from 'vant';
+import { showToast } from 'vant';
+import { registerSW } from 'virtual:pwa-register';
 import '../style.css';
 /* Vant 命令式 API（Dialog/Toast）样式需单独引入 */
 import 'vant/es/dialog/style';
 import 'vant/es/toast/style';
 
 initTheme();
+
+/* PWA：发现新版本时弹窗提示，用户点「刷新」后激活新 SW 并重载 */
+const updateSW = registerSW({
+  onNeedRefresh() {
+    showConfirmDialog({
+      title: '发现新版本',
+      message: '请刷新以获取最新内容',
+      confirmButtonText: '刷新',
+      cancelButtonText: '稍后',
+      showCancelButton: true,
+      confirmButtonColor: getPrimaryColor() || undefined,
+    })
+      .then(() => { updateSW(true); })
+      .catch(() => {});
+  },
+  onOfflineReady() {
+    showToast('已可离线使用');
+  },
+});
 
 /* 开发调试：控制台 __applyDay(0~6) 切换按星期主题与头部文案，__applyDayReset() 恢复当天 */
 if (typeof window !== 'undefined') {

@@ -1,12 +1,24 @@
 import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import AutoImport from 'unplugin-auto-import/vite';
+import Components from 'unplugin-vue-components/vite';
+import { VantResolver } from '@vant/auto-import-resolver';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// 重新开启 PWA 与启动页配置
 export default defineConfig({
-  base: './', // 使用相对路径，支持直接打开 HTML 文件
+  base: './',
   plugins: [
+    vue(),
+    AutoImport({
+      resolvers: [VantResolver()],
+      dts: false,
+    }),
+    Components({
+      resolvers: [VantResolver()],
+      dts: false,
+    }),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icon-192.png.jpg', 'icon-512.png.jpg'],
       manifest: {
         name: '潘秋瑾打卡',
