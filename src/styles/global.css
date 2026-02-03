@@ -327,7 +327,7 @@ body {
     min-height: 0;
 }
 
-/* 打卡页、周期页样式见 src/styles/punch.css、period.css（按需加载） */
+/* 打卡页、周期页样式见 punch.css、period.css（按需加载） */
 
 /* ---------- 响应式（小屏） ---------- */
 @media (max-width: 380px) {

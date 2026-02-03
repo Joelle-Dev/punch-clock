@@ -4,15 +4,39 @@
     :show-close="false"
     inner-class="punch-success-modal-inner"
   >
-    <div ref="celebrationRef" class="punch-success-celebration" aria-hidden="true" />
+    <!-- 打卡成功 + 音乐波浪（频谱 + 镜像） -->
+    <div class="punch-success-header">
+      <span class="punch-success-label">打卡成功</span>
+    </div>
+    <div class="punch-success-wave-wrap" aria-hidden="true">
+      <div class="punch-success-wave punch-success-wave--main">
+        <span
+          v-for="idx in BAR_COUNT"
+          :key="'main-' + idx"
+          class="wave-bar"
+          :style="{ transform: `scaleY(${barHeights[idx - 1]})` }"
+        />
+      </div>
+      <div class="punch-success-wave punch-success-wave--mirror">
+        <span
+          v-for="idx in BAR_COUNT"
+          :key="'mirror-' + idx"
+          class="wave-bar wave-bar--mirror"
+          :style="{ transform: `scaleY(${barHeights[idx - 1]})` }"
+        />
+      </div>
+    </div>
     <div class="punch-success-message">{{ message }}</div>
     <van-button type="primary" block round class="punch-success-btn" @click="close">好哒</van-button>
   </BaseModal>
 </template>
 
 <script setup>
-import { ref, watch, nextTick, computed } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import BaseModal from './BaseModal.vue';
+
+const PUNCH_SOUND_URL = (import.meta.env.BASE_URL || '/') + 'music1.mp3';
+const BAR_COUNT = 25;
 
 const props = defineProps({ open: Boolean, message: { type: String, default: '' } });
 const emit = defineEmits(['update:open']);
@@ -22,99 +46,176 @@ const open = computed({
   set: (v) => emit('update:open', v),
 });
 
-const celebrationRef = ref(null);
-const symbols = ['♥', '✨', '★', '☆', '•', '♥', '✨', '★'];
-const anims = ['celebrate-float', 'celebrate-twinkle', 'celebrate-rise'];
-const colors = ['#ff6b9d', '#e84c7a', '#ffd700', '#ffb347', '#c2185b', '#f8bbd9'];
+const barHeights = ref(Array(BAR_COUNT).fill(0.08));
 
-function fillCelebration() {
-  if (!celebrationRef.value) return;
-  celebrationRef.value.innerHTML = '';
-  for (let i = 0; i < 28; i++) {
-    const span = document.createElement('span');
-    span.className = 'celebrate-item ' + anims[i % anims.length];
-    span.textContent = symbols[i % symbols.length];
-    span.style.left = Math.random() * 80 + 10 + '%';
-    span.style.top = Math.random() * 80 + 10 + '%';
-    span.style.animationDelay = Math.random() * 0.8 + 's';
-    span.style.color = colors[i % colors.length];
-    span.style.fontSize = 12 + Math.random() * 12 + 'px';
-    celebrationRef.value.appendChild(span);
+let audioContext = null;
+let analyser = null;
+let rafId = null;
+let sourceNode = null;
+
+function stopWave() {
+  if (rafId != null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
   }
+  if (sourceNode) {
+    try {
+      sourceNode.disconnect();
+    } catch (_) {}
+    sourceNode = null;
+  }
+  barHeights.value = Array(BAR_COUNT).fill(0.08);
 }
 
-function runCelebrationWhenReady() {
-  nextTick(() => {
-    requestAnimationFrame(() => {
-      nextTick(() => {
-        fillCelebration();
-        setTimeout(fillCelebration, 80);
-      });
-    });
-  });
+function updateBarsFromAnalyser() {
+  if (!analyser) return;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const n = BAR_COUNT;
+  const step = Math.max(1, Math.floor(data.length / n));
+  const next = [];
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    const start = i * step;
+    const end = Math.min(start + step, data.length);
+    for (let j = start; j < end; j++) sum += data[j];
+    const avg = sum / (end - start);
+    next.push(Math.min(1, (avg / 255) * 1.2 + 0.08));
+  }
+  barHeights.value = next;
+  rafId = requestAnimationFrame(updateBarsFromAnalyser);
 }
 
-function close() {
-  emit('update:open', false);
+async function startAudioAndWave() {
+  stopWave();
+  try {
+    const ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    audioContext = ctx;
+    if (ctx.state === 'suspended') await ctx.resume();
+
+    const res = await fetch(PUNCH_SOUND_URL);
+    const buf = await res.arrayBuffer();
+    const decoded = await ctx.decodeAudioData(buf);
+
+    sourceNode = ctx.createBufferSource();
+    sourceNode.buffer = decoded;
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.7;
+    sourceNode.connect(analyser);
+    analyser.connect(ctx.destination);
+
+    sourceNode.onended = () => stopWave();
+    sourceNode.start(0);
+
+    updateBarsFromAnalyser();
+  } catch (_) {
+    barHeights.value = Array(BAR_COUNT).fill(0.08);
+  }
 }
 
 watch(
   () => props.open,
   (v) => {
-    if (v) runCelebrationWhenReady();
+    if (v) startAudioAndWave();
+    else stopWave();
   },
   { immediate: true }
 );
+
+onUnmounted(stopWave);
+
+function close() {
+  emit('update:open', false);
+}
 </script>
 
 <style scoped>
 .punch-success-modal-inner {
   position: relative;
   width: 100%;
-  max-width: 300px;
-  background: linear-gradient(160deg, #fff5f8 0%, #fff 40%, #fef9e7 100%);
+  max-width: 320px;
+  background: linear-gradient(165deg, #fef6fb 0%, #fff 30%, #f8faff 70%, #f0f8ff 100%);
   border-radius: var(--radius-lg);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 24px 20px;
+  box-shadow:
+    0 16px 56px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset,
+    0 1px 0 rgba(0, 0, 0, 0.04);
+  padding: 24px 20px 24px;
   text-align: center;
   overflow: hidden;
-  animation: punch-modal-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: punch-modal-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
 @keyframes punch-modal-in {
-  0% { opacity: 0; transform: scale(0.85); }
+  0% { opacity: 0; transform: scale(0.88); }
   100% { opacity: 1; transform: scale(1); }
 }
-.punch-success-celebration {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
+
+.punch-success-header {
+  margin-bottom: 12px;
 }
-:deep(.celebrate-item) {
-  position: absolute;
-  transform: translate(-50%, -50%);
+
+.punch-success-label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.08em;
   opacity: 0.9;
-  animation-duration: 2.5s;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
+  animation: label-in 0.5s ease-out forwards;
 }
-:deep(.celebrate-item.celebrate-float) { animation-name: celebrate-float; }
-:deep(.celebrate-item.celebrate-twinkle) { animation-name: celebrate-twinkle; }
-:deep(.celebrate-item.celebrate-rise) { animation-name: celebrate-rise; }
-@keyframes celebrate-float {
-  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.85; }
-  50% { transform: translate(-50%, -50%) scale(1.15) rotate(10deg); opacity: 1; }
+
+@keyframes label-in {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 0.9; transform: translateY(0); }
 }
-@keyframes celebrate-twinkle {
-  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+
+.punch-success-wave-wrap {
+  position: relative;
+  height: 110px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.06));
 }
-@keyframes celebrate-rise {
-  0% { opacity: 0.6; transform: translate(-50%, -50%) translateY(4px) scale(0.95); }
-  50% { opacity: 1; transform: translate(-50%, -50%) translateY(-6px) scale(1.1); }
-  100% { opacity: 0.6; transform: translate(-50%, -50%) translateY(4px) scale(0.95); }
+
+.punch-success-wave {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 52px;
 }
+
+.punch-success-wave--main {
+  margin-bottom: 4px;
+}
+
+.punch-success-wave--mirror {
+  transform: scaleY(-1);
+  opacity: 0.35;
+  height: 48px;
+}
+
+.wave-bar {
+  display: inline-block;
+  width: 4px;
+  height: 50px;
+  border-radius: 3px;
+  background: linear-gradient(to top, var(--primary), var(--primary-soft));
+  transform-origin: center bottom;
+  transition: transform 0.05s ease-out;
+  opacity: 0.92;
+}
+
+.wave-bar--mirror {
+  opacity: 0.4;
+  background: linear-gradient(to top, var(--primary), transparent);
+}
+
 .punch-success-message {
   position: relative;
   z-index: 1;
@@ -122,11 +223,13 @@ watch(
   font-weight: 600;
   color: var(--primary);
   margin-bottom: 20px;
-  line-height: 1.4;
+  line-height: 1.5;
+  padding: 0 4px;
 }
+
 .punch-success-btn {
   position: relative;
   z-index: 1;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 </style>

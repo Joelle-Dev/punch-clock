@@ -108,6 +108,7 @@ import { useAchievements } from '../composables/useAchievements';
 import { useDoubleTapHint } from '../composables/useDoubleTapHint';
 import { dayjs, formatDateDisplay, formatTime } from '../utils/date';
 import { getPraiseMessage } from '../utils/praise';
+import { playPunchHaptic } from '../utils/feedback';
 import PunchSuccessModal from '../components/PunchSuccessModal.vue';
 import { ToiletIcon, MealIcon, FitnessIcon, OtherIcon } from '../components/icons';
 
@@ -257,6 +258,8 @@ function refreshRecords() {
 
 function onPunch() {
   if (shouldSkipDueToDoubleTap(currentType.value)) return;
+
+  playPunchHaptic();
 
   const displayName = getDisplayName();
   punchSuccessMessage.value = getPraiseMessage(currentType.value, displayName);

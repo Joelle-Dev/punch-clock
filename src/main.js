@@ -6,7 +6,7 @@ import { getPrimaryColor } from './utils/theme';
 import { showConfirmDialog } from 'vant';
 import { showToast } from 'vant';
 import { registerSW } from 'virtual:pwa-register';
-import '../style.css';
+import './styles/global.css';
 /* Vant 命令式 API（Dialog/Toast）样式需单独引入 */
 import 'vant/es/dialog/style';
 import 'vant/es/toast/style';
