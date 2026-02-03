@@ -27,15 +27,31 @@
       </div>
     </div>
     <div class="punch-success-message">{{ message }}</div>
+    <!-- 歌词：按行显示，并根据播放进度高亮当前行 -->
+    <div
+      class="punch-success-lyrics"
+      v-if="lyricsLines.length"
+      ref="lyricsContainerRef"
+    >
+      <p
+        v-for="(line, index) in lyricsLines"
+        :key="index"
+        class="punch-success-lyric-line"
+        :class="{ 'punch-success-lyric-line--active': index === currentLyricIndex }"
+      >
+        {{ line }}
+      </p>
+    </div>
     <van-button type="primary" block round class="punch-success-btn" @click="close">好哒</van-button>
   </BaseModal>
 </template>
 
 <script setup>
-import { computed, ref, watch, onUnmounted } from 'vue';
+import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
 import BaseModal from './BaseModal.vue';
 
-const PUNCH_SOUND_URL = (import.meta.env.BASE_URL || '/') + 'music1.mp3';
+const PUNCH_SOUND_URL = (import.meta.env.BASE_URL || '/') + 'music2.mp3';
+const LRC_URL = (import.meta.env.BASE_URL || '/') + 'music2.lrc';
 const BAR_COUNT = 25;
 
 const props = defineProps({ open: Boolean, message: { type: String, default: '' } });
@@ -47,11 +63,73 @@ const open = computed({
 });
 
 const barHeights = ref(Array(BAR_COUNT).fill(0.08));
+const lyricsContainerRef = ref(null);
+// 从 LRC 解析出的 [{ time, text }]
+const lyricsEntries = ref([]);
+// 仅用于模板展示的纯文本行
+const lyricsLines = computed(() => lyricsEntries.value.map((l) => l.text));
+const currentLyricIndex = ref(-1);
 
 let audioContext = null;
 let analyser = null;
 let rafId = null;
 let sourceNode = null;
+let lyricsRafId = null;
+let startTime = null;
+let lyricsLoaded = false;
+let trackDuration = 0;
+
+function parseLrc(text) {
+  const rawLines = text.split('\n');
+  const result = [];
+
+  for (const raw of rawLines) {
+    const line = raw.trim();
+    if (!line || /^\[(ti|ar|al|by|offset):/i.test(line)) continue;
+
+    // 匹配一个或多个时间标签，例如 [00:12.34][00:15.00]歌词
+    const timeTagRegex = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
+    let match;
+    const times = [];
+    let lastIndex = 0;
+
+    while ((match = timeTagRegex.exec(line)) !== null) {
+      const min = Number(match[1] || 0);
+      const sec = Number(match[2] || 0);
+      times.push(min * 60 + sec);
+      lastIndex = timeTagRegex.lastIndex;
+    }
+
+    if (!times.length) continue;
+
+    const textPart = line.slice(lastIndex).trim();
+    if (!textPart) continue;
+
+    times.forEach((t) => {
+      result.push({ time: t, text: textPart });
+    });
+  }
+
+  // 按时间排序，保证递增
+  result.sort((a, b) => a.time - b.time);
+  return result;
+}
+
+async function ensureLyricsLoaded() {
+  if (lyricsLoaded || !LRC_URL) return;
+  try {
+    const res = await fetch(LRC_URL);
+    if (!res.ok) return;
+    const text = await res.text();
+    const entries = parseLrc(text);
+    if (entries.length) {
+      lyricsEntries.value = entries;
+      lyricsLoaded = true;
+    }
+  } catch (_) {
+    // 忽略歌词加载错误，界面上只是不显示 / 不高亮
+  }
+}
 
 function stopWave() {
   if (rafId != null) {
@@ -65,6 +143,14 @@ function stopWave() {
     sourceNode = null;
   }
   barHeights.value = Array(BAR_COUNT).fill(0.08);
+
+  if (lyricsRafId != null) {
+    cancelAnimationFrame(lyricsRafId);
+    lyricsRafId = null;
+  }
+  currentLyricIndex.value = -1;
+  trackDuration = 0;
+  startTime = null;
 }
 
 function updateBarsFromAnalyser() {
@@ -86,12 +172,55 @@ function updateBarsFromAnalyser() {
   rafId = requestAnimationFrame(updateBarsFromAnalyser);
 }
 
+function startLyricsHighlight(duration) {
+  if (!audioContext || !lyricsEntries.value.length) return;
+  startTime = audioContext.currentTime;
+
+  if (lyricsRafId != null) {
+    cancelAnimationFrame(lyricsRafId);
+    lyricsRafId = null;
+  }
+
+  const tick = () => {
+    if (!audioContext || startTime == null) return;
+    const elapsed = audioContext.currentTime - startTime;
+    if (elapsed < 0) {
+      lyricsRafId = requestAnimationFrame(tick);
+      return;
+    }
+    const list = lyricsEntries.value;
+    // 找到最后一个 time <= elapsed 的行
+    let idx = list.length - 1;
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].time <= elapsed) idx = i;
+      else break;
+    }
+    currentLyricIndex.value = idx;
+    lyricsRafId = requestAnimationFrame(tick);
+  };
+
+  tick();
+}
+
+// 歌词高亮变化时，自动滚动到可视区域中间
+watch(currentLyricIndex, async () => {
+  await nextTick();
+  const container = lyricsContainerRef.value;
+  if (!container) return;
+  const active = container.querySelector('.punch-success-lyric-line--active');
+  if (!active) return;
+  active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+});
+
 async function startAudioAndWave() {
   stopWave();
   try {
     const ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
     audioContext = ctx;
     if (ctx.state === 'suspended') await ctx.resume();
+
+    // 并行准备歌词与音频
+    await ensureLyricsLoaded();
 
     const res = await fetch(PUNCH_SOUND_URL);
     const buf = await res.arrayBuffer();
@@ -109,6 +238,7 @@ async function startAudioAndWave() {
     sourceNode.start(0);
 
     updateBarsFromAnalyser();
+    startLyricsHighlight(decoded.duration || 0);
   } catch (_) {
     barHeights.value = Array(BAR_COUNT).fill(0.08);
   }
@@ -225,6 +355,30 @@ function close() {
   margin-bottom: 20px;
   line-height: 1.5;
   padding: 0 4px;
+}
+
+.punch-success-lyrics {
+  position: relative;
+  z-index: 1;
+  max-height: 120px;
+  margin: 0 4px 16px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2, #666);
+  text-align: left;
+  overflow-y: auto;
+}
+
+.punch-success-lyric-line + .punch-success-lyric-line {
+  margin-top: 2px;
+}
+
+.punch-success-lyric-line--active {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .punch-success-btn {

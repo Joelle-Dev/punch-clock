@@ -3,7 +3,7 @@
  */
 
 /** 音效放在 public/，随构建输出到根路径，用 BASE_URL 兼容子路径部署 */
-const PUNCH_SOUND_URL = (import.meta.env.BASE_URL || '/') + 'music1.mp3';
+const PUNCH_SOUND_URL = (import.meta.env.BASE_URL || '/') + 'music2.mp3';
 let punchAudio = null;
 
 function getPunchAudio() {
@@ -15,7 +15,7 @@ function getPunchAudio() {
 }
 
 /**
- * 播放打卡音效（使用 music1.mp3）
+ * 播放打卡音效（使用 music2.mp3）
  */
 export function playPunchSound() {
   try {
