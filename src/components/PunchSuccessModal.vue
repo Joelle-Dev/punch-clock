@@ -42,7 +42,19 @@
         {{ line }}
       </p>
     </div>
-    <van-button type="primary" block round class="punch-success-btn" @click="close">好哒</van-button>
+    <van-button
+      type="primary"
+      block
+      round
+      class="punch-success-btn"
+      :class="{ 'punch-success-btn--breathing': isPlaying }"
+      @click="close"
+    >
+      好哒
+    </van-button>
+    <p v-if="isAutoClosePending" class="punch-success-autoclose-hint">
+      {{ autoCloseRemaining }} 秒后自动收起
+    </p>
   </BaseModal>
 </template>
 
@@ -93,6 +105,10 @@ const lyricsEntries = ref([]);
 const lyricsLines = computed(() => lyricsEntries.value.map((e) => e.text));
 const currentLyricIndex = ref(-1);
 
+const AUTO_CLOSE_SECONDS = 3;
+const isAutoClosePending = ref(false);
+const autoCloseRemaining = ref(AUTO_CLOSE_SECONDS);
+
 let audioContext = null;
 let analyser = null;
 let rafId = null;
@@ -132,6 +148,9 @@ function parseLrc(text) {
   return result;
 }
 
+let autoCloseTimerId = null;
+const isPlaying = ref(false);
+
 async function ensureLyricsLoaded(lrcUrl) {
   if (!lrcUrl) return;
   try {
@@ -144,7 +163,33 @@ async function ensureLyricsLoaded(lrcUrl) {
   }
 }
 
-function stopWave() {
+function cancelAutoClose() {
+  if (autoCloseTimerId != null) {
+    clearInterval(autoCloseTimerId);
+    autoCloseTimerId = null;
+  }
+  isAutoClosePending.value = false;
+  autoCloseRemaining.value = AUTO_CLOSE_SECONDS;
+}
+
+function startAutoCloseCountdown() {
+  cancelAutoClose();
+  isAutoClosePending.value = true;
+  autoCloseRemaining.value = AUTO_CLOSE_SECONDS;
+  autoCloseTimerId = setInterval(() => {
+    if (autoCloseRemaining.value <= 1) {
+      cancelAutoClose();
+      // 倒计时结束自动收起弹窗
+      close();
+    } else {
+      autoCloseRemaining.value -= 1;
+    }
+  }, 1000);
+}
+
+function stopWave(options = {}) {
+  const { keepLyrics = false } = options;
+  isPlaying.value = false;
   if (rafId != null) {
     cancelAnimationFrame(rafId);
     rafId = null;
@@ -161,8 +206,10 @@ function stopWave() {
     clearInterval(lyricsIntervalId);
     lyricsIntervalId = null;
   }
-  currentLyricIndex.value = -1;
-  lyricsEntries.value = [];
+  if (!keepLyrics) {
+    currentLyricIndex.value = -1;
+    lyricsEntries.value = [];
+  }
   startTime = null;
   analyser = null;
 }
@@ -256,9 +303,15 @@ async function startAudioAndWave() {
     analyser.connect(gainNode);
     gainNode.connect(ctx.destination);
 
-    sourceNode.onended = () => stopWave();
+    // 自然播放结束时仅停止波浪和计时，保留最后一行歌词，并开启自动收起倒计时
+    sourceNode.onended = () => {
+      stopWave({ keepLyrics: true });
+      startAutoCloseCountdown();
+    };
     sourceNode.start(0);
 
+    isPlaying.value = true;
+    cancelAutoClose();
     updateBarsFromAnalyser();
     startLyricsHighlight();
   } catch (err) {
@@ -271,14 +324,21 @@ watch(
   () => props.open,
   (v) => {
     if (v) startAudioAndWave();
-    else stopWave();
+    else {
+      stopWave();
+      cancelAutoClose();
+    }
   },
   { immediate: true }
 );
 
-onUnmounted(stopWave);
+onUnmounted(() => {
+  stopWave();
+  cancelAutoClose();
+});
 
 function close() {
+  cancelAutoClose();
   emit('update:open', false);
 }
 </script>
@@ -408,5 +468,35 @@ function close() {
   position: relative;
   z-index: 1;
   margin-top: 2px;
+}
+
+.punch-success-btn {
+  transition: transform 0.35s ease-out, box-shadow 0.35s ease-out;
+}
+
+.punch-success-btn--breathing {
+  animation: punch-breath 1.8s ease-in-out infinite;
+}
+
+@keyframes punch-breath {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(79, 70, 229, 0.0);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 18px rgba(79, 70, 229, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(79, 70, 229, 0.0);
+  }
+}
+
+.punch-success-autoclose-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-2, #666);
+  opacity: 0.8;
 }
 </style>
