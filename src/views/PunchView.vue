@@ -101,6 +101,7 @@
       v-model:open="punchSuccessOpen"
       :punch-type="punchSuccessType"
       :message="punchSuccessMessage"
+      :unlocked-audio-context="unlockedAudioContext"
     />
   </div>
 </template>
@@ -158,6 +159,8 @@ const bounce = ref(false);
 const punchSuccessOpen = ref(false);
 const punchSuccessType = ref('fitness');
 const punchSuccessMessage = ref('');
+/** 在用户点击时同步创建并 resume，供移动端通过自动播放策略 */
+const unlockedAudioContext = ref(null);
 
 // ===== 计算属性 =====
 const achievementMap = computed(() => {
@@ -266,6 +269,18 @@ function onPunch() {
   if (shouldSkipDueToDoubleTap(currentType.value)) return;
 
   playPunchHaptic();
+
+  // 在用户手势的同一调用栈内创建并恢复 AudioContext，否则移动端会静音。
+  // 每次点击都要 resume：关弹窗后 iOS 会把 context 再次挂起，第二次打卡（如如厕）若不在点击里 resume 会静音。
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (Ctx) {
+    if (!unlockedAudioContext.value || unlockedAudioContext.value.state === 'closed') {
+      unlockedAudioContext.value = new Ctx();
+    }
+    if (unlockedAudioContext.value.state === 'suspended') {
+      unlockedAudioContext.value.resume();
+    }
+  }
 
   const displayName = getDisplayName();
   punchSuccessType.value = currentType.value;

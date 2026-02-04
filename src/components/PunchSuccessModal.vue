@@ -70,6 +70,8 @@ const props = defineProps({
   /** 本次打卡类型：toilet=如厕(paomo) / meal=饭否(food) / fitness=健身(fitness) / other=其他(paomo) */
   punchType: { type: String, default: 'fitness' },
   message: { type: String, default: '' },
+  /** 在用户点击时已创建并 resume 的 AudioContext，用于通过移动端自动播放策略 */
+  unlockedAudioContext: { type: Object, default: null },
 });
 const emit = defineEmits(['update:open']);
 
@@ -225,7 +227,12 @@ async function startAudioAndWave() {
   try {
     const { sound: soundUrl, lrc: lrcUrl } = getUrlsByPunchType(props.punchType);
 
-    const ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx =
+      props.unlockedAudioContext &&
+      props.unlockedAudioContext.state !== 'closed'
+        ? props.unlockedAudioContext
+        : audioContext || new Ctx();
     audioContext = ctx;
     if (ctx.state === 'suspended') await ctx.resume();
 
