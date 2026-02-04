@@ -90,6 +90,7 @@ let rafId = null;
 let sourceNode = null;
 let lyricsIntervalId = null;
 let startTime = null;
+let trackDuration = null;
 
 function parseLrc(text) {
   const rawLines = text.split('\n');
@@ -157,7 +158,7 @@ function stopWave() {
     lyricsIntervalId = null;
   }
   currentLyricIndex.value = -1;
-  trackDuration = 0;
+  trackDuration = null;
   startTime = null;
 }
 
