@@ -58,11 +58,18 @@ const GAIN_BY_TYPE = { toilet: 1, meal: 1.5, fitness: 1.5, other: 1 };
 
 /** 打卡类型 -> 资源 key：如厕/其他=paomo，饭否=food，健身=fitness */
 const PUNCH_TYPE_KEY = { toilet: 'paomo', meal: 'food', fitness: 'fitness', other: 'paomo' };
+const LRC_TIME_TAG_REGEX = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
 
 function getUrlsByPunchType(punchType) {
   const key = PUNCH_TYPE_KEY[punchType] || 'paomo';
   const lrcFile = key === 'paomo' ? 'music2.lrc' : `music_${key}.lrc`;
-  return { sound: BASE + `music_${key}.mp3`, lrc: BASE + lrcFile };
+  const soundPath = BASE + `music_${key}.mp3`;
+  const lrcPath = BASE + lrcFile;
+  const base = typeof document !== 'undefined' ? document.baseURI || window.location.origin + '/' : '';
+  return {
+    sound: base ? new URL(soundPath, base).href : soundPath,
+    lrc: base ? new URL(lrcPath, base).href : lrcPath,
+  };
 }
 
 const props = defineProps({
@@ -92,7 +99,6 @@ let rafId = null;
 let sourceNode = null;
 let lyricsIntervalId = null;
 let startTime = null;
-let trackDuration = null;
 
 function parseLrc(text) {
   const rawLines = text.split('\n');
@@ -102,17 +108,13 @@ function parseLrc(text) {
     const line = raw.trim();
     if (!line || /^\[(ti|ar|al|by|offset):/i.test(line)) continue;
 
-    // 匹配一个或多个时间标签，例如 [00:12.34][00:15.00]歌词
-    const timeTagRegex = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
-    let match;
     const times = [];
     let lastIndex = 0;
-
-    while ((match = timeTagRegex.exec(line)) !== null) {
-      const min = Number(match[1] || 0);
-      const sec = Number(match[2] || 0);
-      times.push(min * 60 + sec);
-      lastIndex = timeTagRegex.lastIndex;
+    let match;
+    LRC_TIME_TAG_REGEX.lastIndex = 0;
+    while ((match = LRC_TIME_TAG_REGEX.exec(line)) !== null) {
+      times.push(Number(match[1] || 0) * 60 + Number(match[2] || 0));
+      lastIndex = LRC_TIME_TAG_REGEX.lastIndex;
     }
 
     if (!times.length) continue;
@@ -153,15 +155,16 @@ function stopWave() {
     } catch (_) {}
     sourceNode = null;
   }
-  barHeights.value = Array(BAR_COUNT).fill(0.08);
+  barHeights.value = Array(BAR_COUNT).fill(DEFAULT_BAR);
 
   if (lyricsIntervalId != null) {
     clearInterval(lyricsIntervalId);
     lyricsIntervalId = null;
   }
   currentLyricIndex.value = -1;
-  trackDuration = null;
+  lyricsEntries.value = [];
   startTime = null;
+  analyser = null;
 }
 
 function updateBarsFromAnalyser() {
@@ -258,8 +261,9 @@ async function startAudioAndWave() {
 
     updateBarsFromAnalyser();
     startLyricsHighlight();
-  } catch (_) {
+  } catch (err) {
     barHeights.value = Array(BAR_COUNT).fill(DEFAULT_BAR);
+    console.error('[PunchSuccessModal] 音频加载或播放失败', { url: soundUrl, punchType: props.punchType, error: err });
   }
 }
 
