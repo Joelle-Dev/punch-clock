@@ -96,7 +96,12 @@
         </div>
       </section>
     </main>
-    <PunchSuccessModal v-if="punchSuccessOpen" v-model:open="punchSuccessOpen" :message="punchSuccessMessage" />
+    <PunchSuccessModal
+      v-if="punchSuccessOpen"
+      v-model:open="punchSuccessOpen"
+      :punch-type="punchSuccessType"
+      :message="punchSuccessMessage"
+    />
   </div>
 </template>
 
@@ -151,6 +156,7 @@ const currentType = ref(
 );
 const bounce = ref(false);
 const punchSuccessOpen = ref(false);
+const punchSuccessType = ref('fitness');
 const punchSuccessMessage = ref('');
 
 // ===== 计算属性 =====
@@ -262,6 +268,7 @@ function onPunch() {
   playPunchHaptic();
 
   const displayName = getDisplayName();
+  punchSuccessType.value = currentType.value;
   punchSuccessMessage.value = getPraiseMessage(currentType.value, displayName);
   punchSuccessOpen.value = true;
   addRecord(currentType.value);

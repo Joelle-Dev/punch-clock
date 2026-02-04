@@ -50,11 +50,27 @@
 import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
 import BaseModal from './BaseModal.vue';
 
-const PUNCH_SOUND_URL = (import.meta.env.BASE_URL || '/') + 'music2.mp3';
-const LRC_URL = (import.meta.env.BASE_URL || '/') + 'music2.lrc';
+const BASE = (import.meta.env.BASE_URL || '/').replace(/\/*$/, '') + '/';
 const BAR_COUNT = 25;
+const DEFAULT_BAR = 0.08;
+/** 饭否/健身默认音量放大倍数，如厕/其他为 1 */
+const GAIN_BY_TYPE = { toilet: 1, meal: 1.5, fitness: 1.5, other: 1 };
 
-const props = defineProps({ open: Boolean, message: { type: String, default: '' } });
+/** 打卡类型 -> 资源 key：如厕/其他=paomo，饭否=food，健身=fitness */
+const PUNCH_TYPE_KEY = { toilet: 'paomo', meal: 'food', fitness: 'fitness', other: 'paomo' };
+
+function getUrlsByPunchType(punchType) {
+  const key = PUNCH_TYPE_KEY[punchType] || 'paomo';
+  const lrcFile = key === 'paomo' ? 'music2.lrc' : `music_${key}.lrc`;
+  return { sound: BASE + `music_${key}.mp3`, lrc: BASE + lrcFile };
+}
+
+const props = defineProps({
+  open: Boolean,
+  /** 本次打卡类型：toilet=如厕(paomo) / meal=饭否(food) / fitness=健身(fitness) / other=其他(paomo) */
+  punchType: { type: String, default: 'fitness' },
+  message: { type: String, default: '' },
+});
 const emit = defineEmits(['update:open']);
 
 const open = computed({
@@ -62,22 +78,18 @@ const open = computed({
   set: (v) => emit('update:open', v),
 });
 
-const barHeights = ref(Array(BAR_COUNT).fill(0.08));
+const barHeights = ref(Array(BAR_COUNT).fill(DEFAULT_BAR));
 const lyricsContainerRef = ref(null);
-// 从 LRC 解析出的 [{ time, text }]
 const lyricsEntries = ref([]);
-// 仅用于模板展示的纯文本行
-const lyricsLines = computed(() => lyricsEntries.value.map((l) => l.text));
+const lyricsLines = computed(() => lyricsEntries.value.map((e) => e.text));
 const currentLyricIndex = ref(-1);
 
 let audioContext = null;
 let analyser = null;
 let rafId = null;
 let sourceNode = null;
-let lyricsRafId = null;
+let lyricsIntervalId = null;
 let startTime = null;
-let lyricsLoaded = false;
-let trackDuration = 0;
 
 function parseLrc(text) {
   const rawLines = text.split('\n');
@@ -115,19 +127,15 @@ function parseLrc(text) {
   return result;
 }
 
-async function ensureLyricsLoaded() {
-  if (lyricsLoaded || !LRC_URL) return;
+async function ensureLyricsLoaded(lrcUrl) {
+  if (!lrcUrl) return;
   try {
-    const res = await fetch(LRC_URL);
+    const res = await fetch(lrcUrl);
     if (!res.ok) return;
     const text = await res.text();
-    const entries = parseLrc(text);
-    if (entries.length) {
-      lyricsEntries.value = entries;
-      lyricsLoaded = true;
-    }
+    lyricsEntries.value = parseLrc(text);
   } catch (_) {
-    // 忽略歌词加载错误，界面上只是不显示 / 不高亮
+    lyricsEntries.value = [];
   }
 }
 
@@ -144,9 +152,9 @@ function stopWave() {
   }
   barHeights.value = Array(BAR_COUNT).fill(0.08);
 
-  if (lyricsRafId != null) {
-    cancelAnimationFrame(lyricsRafId);
-    lyricsRafId = null;
+  if (lyricsIntervalId != null) {
+    clearInterval(lyricsIntervalId);
+    lyricsIntervalId = null;
   }
   currentLyricIndex.value = -1;
   trackDuration = 0;
@@ -172,57 +180,57 @@ function updateBarsFromAnalyser() {
   rafId = requestAnimationFrame(updateBarsFromAnalyser);
 }
 
-function startLyricsHighlight(duration) {
+function startLyricsHighlight() {
   if (!audioContext || !lyricsEntries.value.length) return;
   startTime = audioContext.currentTime;
 
-  if (lyricsRafId != null) {
-    cancelAnimationFrame(lyricsRafId);
-    lyricsRafId = null;
+  if (lyricsIntervalId != null) {
+    clearInterval(lyricsIntervalId);
+    lyricsIntervalId = null;
   }
 
+  // 用定时器约每 200ms 检查一次，避免每帧更新导致卡顿；仅当当前行变化时才更新 ref 并触发滚动
   const tick = () => {
     if (!audioContext || startTime == null) return;
     const elapsed = audioContext.currentTime - startTime;
-    if (elapsed < 0) {
-      lyricsRafId = requestAnimationFrame(tick);
-      return;
-    }
+    if (elapsed < 0) return;
     const list = lyricsEntries.value;
-    // 找到最后一个 time <= elapsed 的行
     let idx = list.length - 1;
     for (let i = 0; i < list.length; i++) {
       if (list[i].time <= elapsed) idx = i;
       else break;
     }
-    currentLyricIndex.value = idx;
-    lyricsRafId = requestAnimationFrame(tick);
+    if (idx !== currentLyricIndex.value) {
+      currentLyricIndex.value = idx;
+    }
   };
 
   tick();
+  lyricsIntervalId = setInterval(tick, 200);
 }
 
-// 歌词高亮变化时，自动滚动到可视区域中间
+// 歌词高亮变化时，自动滚动到可视区域中间（用 auto 减少滚动动画带来的卡顿）
 watch(currentLyricIndex, async () => {
   await nextTick();
   const container = lyricsContainerRef.value;
   if (!container) return;
   const active = container.querySelector('.punch-success-lyric-line--active');
   if (!active) return;
-  active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  active.scrollIntoView({ block: 'center', behavior: 'auto' });
 });
 
 async function startAudioAndWave() {
   stopWave();
   try {
+    const { sound: soundUrl, lrc: lrcUrl } = getUrlsByPunchType(props.punchType);
+
     const ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
     audioContext = ctx;
     if (ctx.state === 'suspended') await ctx.resume();
 
-    // 并行准备歌词与音频
-    await ensureLyricsLoaded();
+    await ensureLyricsLoaded(lrcUrl);
 
-    const res = await fetch(PUNCH_SOUND_URL);
+    const res = await fetch(soundUrl);
     const buf = await res.arrayBuffer();
     const decoded = await ctx.decodeAudioData(buf);
 
@@ -231,16 +239,19 @@ async function startAudioAndWave() {
     analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.7;
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = GAIN_BY_TYPE[props.punchType] ?? 1;
     sourceNode.connect(analyser);
-    analyser.connect(ctx.destination);
+    analyser.connect(gainNode);
+    gainNode.connect(ctx.destination);
 
     sourceNode.onended = () => stopWave();
     sourceNode.start(0);
 
     updateBarsFromAnalyser();
-    startLyricsHighlight(decoded.duration || 0);
+    startLyricsHighlight();
   } catch (_) {
-    barHeights.value = Array(BAR_COUNT).fill(0.08);
+    barHeights.value = Array(BAR_COUNT).fill(DEFAULT_BAR);
   }
 }
 
