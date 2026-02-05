@@ -4,7 +4,6 @@
     :show-close="false"
     inner-class="punch-success-modal-inner"
   >
-    <!-- 打卡成功 + 音乐波浪（频谱 + 镜像） -->
     <div class="punch-success-header">
       <span class="punch-success-label">打卡成功</span>
     </div>
@@ -27,10 +26,9 @@
       </div>
     </div>
     <div class="punch-success-message">{{ message }}</div>
-    <!-- 歌词：按行显示，并根据播放进度高亮当前行 -->
     <div
-      class="punch-success-lyrics"
       v-if="lyricsLines.length"
+      class="punch-success-lyrics"
       ref="lyricsContainerRef"
     >
       <p
@@ -65,11 +63,8 @@ import BaseModal from './BaseModal.vue';
 const BASE = (import.meta.env.BASE_URL || '/').replace(/\/*$/, '') + '/';
 const BAR_COUNT = 25;
 const DEFAULT_BAR = 0.08;
-/** 饭否/健身默认音量放大倍数，如厕/其他为 1 */
-const GAIN_BY_TYPE = { toilet: 1, meal: 1.5, fitness: 1.5, other: 1 };
-
-/** 打卡类型 -> 资源 key：如厕/其他=paomo，饭否=food，健身=fitness */
-const PUNCH_TYPE_KEY = { toilet: 'paomo', meal: 'food', fitness: 'fitness', other: 'paomo' };
+const GAIN_BY_TYPE = { toilet: 1, meal: 1.9, fitness: 1.9 };
+const PUNCH_TYPE_KEY = { toilet: 'paomo', meal: 'food', fitness: 'fitness' };
 const LRC_TIME_TAG_REGEX = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
 
 function getUrlsByPunchType(punchType) {
@@ -86,10 +81,9 @@ function getUrlsByPunchType(punchType) {
 
 const props = defineProps({
   open: Boolean,
-  /** 本次打卡类型：toilet=如厕(paomo) / meal=饭否(food) / fitness=健身(fitness) / other=其他(paomo) */
   punchType: { type: String, default: 'fitness' },
   message: { type: String, default: '' },
-  /** 在用户点击时已创建并 resume 的 AudioContext，用于通过移动端自动播放策略 */
+  /** 用户点击时已 resume 的 AudioContext，用于移动端自动播放 */
   unlockedAudioContext: { type: Object, default: null },
 });
 const emit = defineEmits(['update:open']);
@@ -108,6 +102,7 @@ const currentLyricIndex = ref(-1);
 const AUTO_CLOSE_SECONDS = 3;
 const isAutoClosePending = ref(false);
 const autoCloseRemaining = ref(AUTO_CLOSE_SECONDS);
+const isPlaying = ref(false);
 
 let audioContext = null;
 let analyser = null;
@@ -115,15 +110,14 @@ let rafId = null;
 let sourceNode = null;
 let lyricsIntervalId = null;
 let startTime = null;
+let autoCloseTimerId = null;
 
 function parseLrc(text) {
-  const rawLines = text.split('\n');
   const result = [];
-
+  const rawLines = text.split('\n');
   for (const raw of rawLines) {
     const line = raw.trim();
     if (!line || /^\[(ti|ar|al|by|offset):/i.test(line)) continue;
-
     const times = [];
     let lastIndex = 0;
     let match;
@@ -132,24 +126,14 @@ function parseLrc(text) {
       times.push(Number(match[1] || 0) * 60 + Number(match[2] || 0));
       lastIndex = LRC_TIME_TAG_REGEX.lastIndex;
     }
-
     if (!times.length) continue;
-
     const textPart = line.slice(lastIndex).trim();
     if (!textPart) continue;
-
-    times.forEach((t) => {
-      result.push({ time: t, text: textPart });
-    });
+    times.forEach((t) => result.push({ time: t, text: textPart }));
   }
-
-  // 按时间排序，保证递增
   result.sort((a, b) => a.time - b.time);
   return result;
 }
-
-let autoCloseTimerId = null;
-const isPlaying = ref(false);
 
 async function ensureLyricsLoaded(lrcUrl) {
   if (!lrcUrl) return;
@@ -179,7 +163,6 @@ function startAutoCloseCountdown() {
   autoCloseTimerId = setInterval(() => {
     if (autoCloseRemaining.value <= 1) {
       cancelAutoClose();
-      // 倒计时结束自动收起弹窗
       close();
     } else {
       autoCloseRemaining.value -= 1;
@@ -195,13 +178,10 @@ function stopWave(options = {}) {
     rafId = null;
   }
   if (sourceNode) {
-    try {
-      sourceNode.disconnect();
-    } catch (_) {}
+    try { sourceNode.disconnect(); } catch (_) {}
     sourceNode = null;
   }
   barHeights.value = Array(BAR_COUNT).fill(DEFAULT_BAR);
-
   if (lyricsIntervalId != null) {
     clearInterval(lyricsIntervalId);
     lyricsIntervalId = null;
@@ -236,13 +216,10 @@ function updateBarsFromAnalyser() {
 function startLyricsHighlight() {
   if (!audioContext || !lyricsEntries.value.length) return;
   startTime = audioContext.currentTime;
-
   if (lyricsIntervalId != null) {
     clearInterval(lyricsIntervalId);
     lyricsIntervalId = null;
   }
-
-  // 用定时器约每 200ms 检查一次，避免每帧更新导致卡顿；仅当当前行变化时才更新 ref 并触发滚动
   const tick = () => {
     if (!audioContext || startTime == null) return;
     const elapsed = audioContext.currentTime - startTime;
@@ -253,16 +230,12 @@ function startLyricsHighlight() {
       if (list[i].time <= elapsed) idx = i;
       else break;
     }
-    if (idx !== currentLyricIndex.value) {
-      currentLyricIndex.value = idx;
-    }
+    if (idx !== currentLyricIndex.value) currentLyricIndex.value = idx;
   };
-
   tick();
   lyricsIntervalId = setInterval(tick, 200);
 }
 
-// 歌词高亮变化时，自动滚动到可视区域中间（用 auto 减少滚动动画带来的卡顿）
 watch(currentLyricIndex, async () => {
   await nextTick();
   const container = lyricsContainerRef.value;
@@ -276,11 +249,9 @@ async function startAudioAndWave() {
   stopWave();
   try {
     const { sound: soundUrl, lrc: lrcUrl } = getUrlsByPunchType(props.punchType);
-
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx =
-      props.unlockedAudioContext &&
-      props.unlockedAudioContext.state !== 'closed'
+      props.unlockedAudioContext && props.unlockedAudioContext.state !== 'closed'
         ? props.unlockedAudioContext
         : audioContext || new Ctx();
     audioContext = ctx;
@@ -303,7 +274,6 @@ async function startAudioAndWave() {
     analyser.connect(gainNode);
     gainNode.connect(ctx.destination);
 
-    // 自然播放结束时仅停止波浪和计时，保留最后一行歌词，并开启自动收起倒计时
     sourceNode.onended = () => {
       stopWave({ keepLyrics: true });
       startAutoCloseCountdown();
@@ -316,15 +286,16 @@ async function startAudioAndWave() {
     startLyricsHighlight();
   } catch (err) {
     barHeights.value = Array(BAR_COUNT).fill(DEFAULT_BAR);
-    console.error('[PunchSuccessModal] 音频加载或播放失败', { url: soundUrl, punchType: props.punchType, error: err });
+    console.error('[PunchSuccessModal] 音频加载或播放失败', { punchType: props.punchType, error: err });
   }
 }
 
 watch(
   () => props.open,
   (v) => {
-    if (v) startAudioAndWave();
-    else {
+    if (v) {
+      startAudioAndWave();
+    } else {
       stopWave();
       cancelAutoClose();
     }
@@ -468,9 +439,6 @@ function close() {
   position: relative;
   z-index: 1;
   margin-top: 2px;
-}
-
-.punch-success-btn {
   transition: transform 0.35s ease-out, box-shadow 0.35s ease-out;
 }
 
@@ -479,18 +447,8 @@ function close() {
 }
 
 @keyframes punch-breath {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 rgba(79, 70, 229, 0.0);
-  }
-  50% {
-    transform: scale(1.04);
-    box-shadow: 0 0 18px rgba(79, 70, 229, 0.25);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 rgba(79, 70, 229, 0.0);
-  }
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(79, 70, 229, 0); }
+  50% { transform: scale(1.04); box-shadow: 0 0 18px rgba(79, 70, 229, 0.25); }
 }
 
 .punch-success-autoclose-hint {

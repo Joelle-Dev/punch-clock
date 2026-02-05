@@ -59,7 +59,12 @@
           </div>
         </section>
       </template>
-      <van-empty v-else description="小本本还是空的哦" image="default" class="record-empty" />
+      <van-empty v-else image="default" class="record-empty">
+        <template #description>
+          <p class="record-empty-desc">小本本还是空的哦</p>
+          <p class="record-empty-warm">打一次就会亮起来～</p>
+        </template>
+      </van-empty>
     </main>
   </div>
 </template>
@@ -100,7 +105,6 @@ const typeTabs = [
   { type: 'toilet', label: '如厕' },
   { type: 'meal', label: '饭否' },
   { type: 'fitness', label: '健身' },
-  { type: 'other', label: '其他' },
 ];
 
 const filterTabs = [
@@ -128,7 +132,7 @@ const dateGroups = computed(() => {
 });
 
 function getTypeLabel(type) {
-  return TYPE_LABELS[type] || TYPE_LABELS.other;
+  return TYPE_LABELS[type] || '其他';
 }
 </script>
 
@@ -306,5 +310,14 @@ function getTypeLabel(type) {
 }
 .record-empty {
   padding: 40px 20px;
+}
+.record-empty-desc {
+  margin: 0 0 4px;
+  color: var(--text-2);
+}
+.record-empty-warm {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-3);
 }
 </style>

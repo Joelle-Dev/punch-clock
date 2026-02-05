@@ -150,7 +150,7 @@ function clearPunch() {
 }
 
 function getTypeLabel(type) {
-  return TYPE_LABELS[type] || TYPE_LABELS.other;
+  return TYPE_LABELS[type] || '其他';
 }
 
 function exportPeriod() {

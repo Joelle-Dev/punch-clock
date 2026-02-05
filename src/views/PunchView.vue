@@ -94,6 +94,8 @@
             </template>
           </div>
         </div>
+        <p v-if="lastYearTodayCount > 0" class="last-year-hint">去年的今天你打了 {{ lastYearTodayCount }} 次哦</p>
+        <p v-else-if="heatmapMonthTotal === 0" class="heatmap-empty-hint">这个月还没打过哦，打一次就会亮起来～</p>
       </section>
     </main>
     <PunchSuccessModal
@@ -109,6 +111,7 @@
 <script setup>
 import '../styles/punch.css';
 import { ref, computed, onMounted, onUnmounted, inject } from 'vue';
+import { showToast } from 'vant';
 import { usePunchRecords } from '../composables/usePunchRecords';
 import { useAchievements } from '../composables/useAchievements';
 import { useDoubleTapHint } from '../composables/useDoubleTapHint';
@@ -116,7 +119,7 @@ import { dayjs, formatDateDisplay, formatTime } from '../utils/date';
 import { getPraiseMessage } from '../utils/praise';
 import { playPunchHaptic } from '../utils/feedback';
 import PunchSuccessModal from '../components/PunchSuccessModal.vue';
-import { ToiletIcon, MealIcon, FitnessIcon, OtherIcon } from '../components/icons';
+import { ToiletIcon, MealIcon, FitnessIcon } from '../components/icons';
 
 // ===== Composables =====
 const { records, todayCount, streak, lastRecord, addRecord, getMonthHeatmap } = usePunchRecords();
@@ -129,7 +132,7 @@ const showAchievementToast = inject('showAchievementToast', () => {});
 const userName = inject('userName', ref(''));
 
 // ===== 常量 =====
-const VALID_TYPES = ['toilet', 'meal', 'fitness', 'other'];
+const VALID_TYPES = ['toilet', 'meal', 'fitness'];
 const DEFAULT_TYPE = 'fitness';
 const DEFAULT_NAME = '秋瑾';
 const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
@@ -148,7 +151,6 @@ const typeTabs = [
   { type: 'toilet', label: '如厕', emoji: '🚽', short: '厕', tint: '#4caf50', iconComponent: ToiletIcon },
   { type: 'meal', label: '饭否', emoji: '🍚', short: '饭', tint: '#ff9800', iconComponent: MealIcon },
   { type: 'fitness', label: '健身', emoji: '💪', short: '身', tint: '#2196f3', iconComponent: FitnessIcon },
-  { type: 'other', label: '其他', emoji: '✨', short: '其', tint: '#9c27b0', iconComponent: OtherIcon },
 ].map((t) => ({ ...t, tabTitle: `${t.emoji} ${t.short}` }));
 
 // ===== 状态 =====
@@ -159,7 +161,7 @@ const bounce = ref(false);
 const punchSuccessOpen = ref(false);
 const punchSuccessType = ref('fitness');
 const punchSuccessMessage = ref('');
-/** 在用户点击时同步创建并 resume，供移动端通过自动播放策略 */
+/** 用户点击时创建并 resume，供移动端自动播放 */
 const unlockedAudioContext = ref(null);
 
 // ===== 计算属性 =====
@@ -208,17 +210,22 @@ const lastPunchDisplay = computed(() => {
   const lastTodayRecord = todayRecords.reduce((max, r) =>
     r.timestamp > max.timestamp ? r : max
   );
-  const typeTab = typeTabs.find((t) => t.type === (lastTodayRecord.type || 'other'));
+  const typeTab = typeTabs.find((t) => t.type === (lastTodayRecord.type || 'fitness'));
 
   return {
     hasRecord: true,
-    typeLabel: typeTab?.label ?? '其他',
+    typeLabel: typeTab?.label ?? '健身',
     dateDisplay: formatDateDisplay(lastTodayRecord.dateKey),
     timeDisplay: formatTime(lastTodayRecord.timestamp),
   };
 });
 
 const now = computed(() => dayjs());
+
+const lastYearTodayCount = computed(() => {
+  const key = dayjs().subtract(1, 'year').format('YYYY-MM-DD');
+  return records.value.filter((r) => r.dateKey === key).length;
+});
 
 const heatmapCells = computed(() => {
   const d = now.value;
@@ -247,6 +254,10 @@ const heatmapCells = computed(() => {
   return cells;
 });
 
+const heatmapMonthTotal = computed(() =>
+  heatmapCells.value.filter((c) => !c.empty).reduce((s, c) => s + (c.count || 0), 0)
+);
+
 // ===== 方法 =====
 function getTypeIconSize(type) {
   return type === 'meal' ? 28 : 24;
@@ -270,9 +281,8 @@ function onPunch() {
 
   playPunchHaptic();
 
-  // 在用户手势的同一调用栈内创建并恢复 AudioContext，否则移动端会静音。
-  // 每次点击都要 resume：关弹窗后 iOS 会把 context 再次挂起，第二次打卡（如如厕）若不在点击里 resume 会静音。
-  const Ctx = window.AudioContext || window.webkitAudioContext;
+  // 在用户交互时创建/恢复 AudioContext，满足移动端自动播放策略
+  const Ctx = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
   if (Ctx) {
     if (!unlockedAudioContext.value || unlockedAudioContext.value.state === 'closed') {
       unlockedAudioContext.value = new Ctx();
@@ -284,7 +294,7 @@ function onPunch() {
 
   const displayName = getDisplayName();
   punchSuccessType.value = currentType.value;
-  punchSuccessMessage.value = getPraiseMessage(currentType.value, displayName);
+  punchSuccessMessage.value = getPraiseMessage(currentType.value, displayName, streak.value);
   punchSuccessOpen.value = true;
   addRecord(currentType.value);
 
@@ -304,6 +314,20 @@ function onPunch() {
     const newly = checkAll(records.value);
     newly.forEach((a) => showAchievementToast(a));
   }, 0);
+
+  // 本周健身小目标（≥3 次）达成提示
+  if (currentType.value === 'fitness') {
+    const weekStart = dayjs().startOf('week').format('YYYY-MM-DD');
+    const weekEnd = dayjs().endOf('week').format('YYYY-MM-DD');
+    const thisWeekFitness = records.value.filter(
+      (r) => r.type === 'fitness' && r.dateKey >= weekStart && r.dateKey <= weekEnd
+    ).length;
+    if (thisWeekFitness >= 3) {
+      setTimeout(() => {
+        showToast('本周健身小目标已达成～');
+      }, 600);
+    }
+  }
 }
 
 function handleVisibilityChange() {
@@ -320,7 +344,6 @@ function handlePageShow(e) {
 
 // ===== 生命周期 =====
 onMounted(() => {
-  // PWA 未关闭、次日再打卡时：切回前台时刷新「今日」等依赖当前日期的计算
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('pageshow', handlePageShow);
 });

@@ -29,27 +29,29 @@ function darkenHex(hex, ratio) {
     .join('');
 }
 
-export function applyCustomTheme(hex) {
-  const root = document.documentElement;
+function clearDayClasses(root) {
   Array.from(root.classList).forEach((c) => {
     if (c.startsWith('theme-day-')) root.classList.remove(c);
   });
+}
+
+export function applyCustomTheme(hex) {
+  const root = document.documentElement;
+  clearDayClasses(root);
   root.style.setProperty('--primary', hex);
   root.style.setProperty('--primary-dark', darkenHex(hex, 0.15));
   const { r, g, b } = hexToRgb(hex);
   root.style.setProperty('--primary-soft', `rgba(${r}, ${g}, ${b}, 0.15)`);
 }
 
-export function applyDayTheme() {
+/** 按星期应用主题色，day 为 0–6（可选，缺省为当天） */
+export function applyDayTheme(day = dayjs().day()) {
   const root = document.documentElement;
   root.style.removeProperty('--primary');
   root.style.removeProperty('--primary-dark');
   root.style.removeProperty('--primary-soft');
-  Array.from(root.classList).forEach((c) => {
-    if (c.startsWith('theme-day-')) root.classList.remove(c);
-  });
-  const d = dayjs().day();
-  root.classList.add('theme-day-' + d);
+  clearDayClasses(root);
+  root.classList.add('theme-day-' + day);
 }
 
 export function initTheme() {

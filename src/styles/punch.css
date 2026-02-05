@@ -1,27 +1,27 @@
 /* 打卡页按需加载样式（由 PunchView 引入） */
 
-/* ===== 紧致布局（仅 punch-panel） ===== */
+/* ===== 紧凑布局（仅 punch-panel） ===== */
 .punch-panel .app-header {
-    padding-top: calc(18px + var(--safe-top));
-    padding-bottom: 12px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-top: calc(14px + var(--safe-top));
+    padding-bottom: 8px;
+    padding-left: 14px;
+    padding-right: 14px;
 }
 .punch-panel .app-main {
-    padding: 12px 16px 0;
+    padding: 8px 14px 0;
 }
 
 /* ===== 顶部栏统计卡片（仅打卡页） ===== */
 .punch-panel .stats-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
 }
 
 .punch-panel .stat-card {
     background: var(--surface);
     border-radius: var(--radius);
-    padding: 10px 12px;
+    padding: 8px 10px;
     text-align: center;
     box-shadow: var(--paper-shadow);
     border-left: var(--accent-line);
@@ -49,7 +49,7 @@
 
 .punch-panel .stat-card .stat-value {
     display: block;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--primary);
     line-height: 1.2;
@@ -72,16 +72,27 @@
     white-space: nowrap;
 }
 
-/* ===== 本月打卡热力图 ===== */
+/* ===== 本月打卡热力图（独立栏位） ===== */
 .punch-panel .heatmap-section {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
+}
+
+.punch-panel .last-year-hint,
+.punch-panel .heatmap-empty-hint {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 8px;
+    text-align: center;
+}
+.punch-panel .heatmap-empty-hint {
+    font-style: normal;
 }
 
 .punch-panel .heatmap-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-2);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -96,9 +107,9 @@
 }
 
 .punch-panel .heatmap-container {
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.6);
     border-radius: var(--radius);
-    padding: 10px;
+    padding: 8px;
     box-shadow: var(--paper-shadow);
 }
 
@@ -207,32 +218,44 @@
 .history-trigger:hover { background: var(--surface-2); }
 .history-trigger:active { opacity: 0.9; }
 
-/* ===== 类型选择（分段控件风格）- 便签感 ===== */
+/* ===== 类型选择（分段控件风格）- 与统计区分层、三栏居中 ===== */
 .punch-panel .type-section {
-    margin-top: 0;
+    margin-top: 10px;
     margin-bottom: 8px;
-    padding: 0 20px;
+    padding: 0 14px;
+    display: flex;
+    justify-content: center;
+}
+.punch-panel .type-section .van-tabs {
+    width: auto;
+    max-width: 100%;
 }
 .punch-panel .type-section .van-tabs__wrap {
-    min-height: 40px;
-    padding: 4px 6px;
+    min-height: 36px;
+    padding: 3px 5px;
     background: var(--surface);
     border-radius: 999px;
     box-shadow: var(--paper-shadow);
+    display: inline-flex;
+    justify-content: center;
+}
+.punch-panel .type-section .van-tabs__nav {
+    justify-content: center;
 }
 .punch-panel .type-section .van-tab {
-    padding: 6px 12px;
-    font-size: 14px;
+    padding: 5px 10px;
+    font-size: 13px;
 }
 
-/* ===== 打卡区 ===== */
+/* ===== 打卡区（视觉重心） ===== */
 .punch-panel .punch-section {
     background: var(--surface);
     border-radius: var(--radius-lg);
-    padding: 20px 20px 18px;
+    padding: 20px 16px 16px;
+    margin-top: 2px;
     margin-bottom: 14px;
     text-align: center;
-    box-shadow: var(--note-shadow);
+    box-shadow: var(--note-shadow), 0 4px 20px rgba(0, 0, 0, 0.06);
     border-left: var(--accent-line);
     border-left-color: var(--primary-soft);
     position: relative;
@@ -240,15 +263,15 @@
 }
 
 .punch-button {
-    width: 88px;
-    height: 88px;
-    min-width: 88px;
-    min-height: 88px;
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    min-height: 80px;
     border-radius: 50%;
     border: none;
     background: linear-gradient(155deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     touch-action: manipulation;
@@ -259,10 +282,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 8px;
+    margin: 0 auto 6px;
 }
 .punch-panel .punch-button {
-    margin: 0 auto 8px;
+    margin: 0 auto 6px;
 }
 .punch-button-inner {
     display: flex;
@@ -612,9 +635,9 @@
   --van-tabs-bottom-bar-color: var(--primary);
 }
 .type-section .van-tab.van-tab--active { font-weight: 600; }
-.punch-section .van-button { width: 88px; height: 88px; min-width: 88px; min-height: 88px; border-radius: 50%; padding: 0; box-shadow: 0 4px 14px rgba(88, 86, 214, 0.4); }
-.punch-section .van-button .punch-icon { font-size: 32px; display: flex; align-items: center; justify-content: center; }
-.punch-section .van-button .punch-text { font-size: 14px; letter-spacing: 0.06em; }
+.punch-section .van-button { width: 80px; height: 80px; min-width: 80px; min-height: 80px; border-radius: 50%; padding: 0; box-shadow: 0 4px 14px rgba(88, 86, 214, 0.4); }
+.punch-section .van-button .punch-icon { font-size: 28px; display: flex; align-items: center; justify-content: center; }
+.punch-section .van-button .punch-text { font-size: 13px; letter-spacing: 0.06em; }
 .history-header .van-tabs__wrap { height: auto; margin: 0 -4px; }
 .history-header .van-tabs--card .van-tabs__wrap { border: none; }
 .history-header .van-tab { padding: 6px 14px; font-size: 13px; }

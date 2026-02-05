@@ -265,3 +265,12 @@
 .period-empty.van-empty {
   padding: 40px 20px;
 }
+.period-empty-desc {
+  margin: 0 0 4px;
+  color: var(--text-2);
+}
+.period-empty-warm {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-3);
+}

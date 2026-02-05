@@ -77,7 +77,6 @@ const typeTabs = [
   { type: 'toilet', label: '如厕' },
   { type: 'meal', label: '饭否' },
   { type: 'fitness', label: '健身' },
-  { type: 'other', label: '其他' },
 ];
 
 const minDate = new Date(dayjs().subtract(1, 'year').valueOf());

@@ -73,7 +73,12 @@
               </template>
             </van-swipe-cell>
           </template>
-          <van-empty v-else description="还没记过姨妈哦" image="default" class="period-empty" />
+          <van-empty v-else image="default" class="period-empty">
+            <template #description>
+              <p class="period-empty-desc">还没记过姨妈哦</p>
+              <p class="period-empty-warm">记一次就会在这里出现～</p>
+            </template>
+          </van-empty>
         </div>
       </section>
     </main>

@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue';
-import { dayjs } from '../utils/date';
-import { todayKey } from '../utils/date';
+import { dayjs, todayKey } from '../utils/date';
 import { STORAGE_KEY } from '../constants';
 
 function loadRecords() {
@@ -66,7 +65,7 @@ export function applyFilter(records, filter) {
 
 export function filterByType(records, type) {
   if (!type) return records;
-  return records.filter((r) => (r.type || 'other') === type);
+  return records.filter((r) => (r.type || 'fitness') === type);
 }
 
 export function getMonthHeatmap(records, year, month) {
@@ -90,7 +89,7 @@ export function usePunchRecords() {
       id: `${now.valueOf()}-${Math.random().toString(36).slice(2, 6)}`,
       timestamp: now.valueOf(),
       dateKey: now.format('YYYY-MM-DD'),
-      type: type || 'other',
+      type: type || 'fitness',
     };
     records.value.push(record);
     saveRecords(records.value);
@@ -104,7 +103,7 @@ export function usePunchRecords() {
       id: `${d.valueOf()}-${Math.random().toString(36).slice(2, 6)}`,
       timestamp: d.valueOf(),
       dateKey: d.format('YYYY-MM-DD'),
-      type: type || 'other',
+      type: type || 'fitness',
     };
     records.value.push(record);
     records.value.sort((a, b) => a.timestamp - b.timestamp);
