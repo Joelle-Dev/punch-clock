@@ -63,8 +63,8 @@ import BaseModal from './BaseModal.vue';
 const BASE = (import.meta.env.BASE_URL || '/').replace(/\/*$/, '') + '/';
 const BAR_COUNT = 25;
 const DEFAULT_BAR = 0.08;
-const GAIN_BY_TYPE = { toilet: 1, meal: 1.9, fitness: 1.9 };
-const PUNCH_TYPE_KEY = { toilet: 'paomo', meal: 'food', fitness: 'fitness' };
+const GAIN_BY_TYPE = { toilet: 1, fitness: 1.9 };
+const PUNCH_TYPE_KEY = { toilet: 'paomo', fitness: 'fitness' };
 const LRC_TIME_TAG_REGEX = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
 
 function getUrlsByPunchType(punchType) {

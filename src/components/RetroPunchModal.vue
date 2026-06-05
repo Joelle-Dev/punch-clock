@@ -41,8 +41,22 @@
     <div class="retro-punch-type-section">
       <span class="retro-punch-label">类型</span>
       <van-tabs v-model:active="currentType" type="card" shrink class="retro-punch-type-tabs">
-        <van-tab v-for="t in typeTabs" :key="t.type" :name="t.type" :title="t.label" />
+        <van-tab v-for="t in typeList" :key="t.type" :name="t.type" :title="t.label" />
       </van-tabs>
+    </div>
+    <div class="retro-punch-amount-section" v-if="currentType === 'toilet'">
+      <span class="retro-punch-label">如厕量</span>
+      <div class="retro-punch-amount-buttons">
+        <button
+          v-for="option in toiletAmountOptions"
+          :key="option.value"
+          type="button"
+          :class="['retro-punch-amount-button', { 'retro-punch-amount-button--active': toiletAmount === option.value }]"
+          @click="toiletAmount = option.value"
+        >
+          {{ option.label }}
+        </button>
+      </div>
     </div>
     <van-button type="primary" block round class="retro-punch-submit" @click="onSubmit">
       补上～
@@ -56,7 +70,9 @@ import BaseModal from './BaseModal.vue';
 import { usePunchRecords } from '../composables/usePunchRecords';
 import { useAchievements } from '../composables/useAchievements';
 import { useDoubleTapHint } from '../composables/useDoubleTapHint';
+import { usePunchTypes } from '../composables/usePunchTypes';
 import { dayjs, todayKey } from '../utils/date';
+import { TOILET_AMOUNT_LABELS } from '../constants';
 
 const props = defineProps({ open: Boolean });
 const emit = defineEmits(['update:open']);
@@ -73,11 +89,10 @@ const { shouldSkipDueToDoubleTap } = useDoubleTapHint({
   messages: ['补上瘾啦？', '再补要收小费啦～', '手下留情嘛～'],
 });
 
-const typeTabs = [
-  { type: 'toilet', label: '如厕' },
-  { type: 'meal', label: '饭否' },
-  { type: 'fitness', label: '健身' },
-];
+const { typeList } = usePunchTypes();
+
+const toiletAmountOptions = Object.entries(TOILET_AMOUNT_LABELS).map(([value, label]) => ({ value, label }));
+const DEFAULT_RETRO_TOILET_AMOUNT = 'normal';
 
 const minDate = new Date(dayjs().subtract(1, 'year').valueOf());
 const maxDate = new Date(dayjs().valueOf());
@@ -85,6 +100,7 @@ const maxDate = new Date(dayjs().valueOf());
 const selectedDate = ref('');
 const selectedTime = ref('12:00');
 const currentType = ref('toilet');
+const toiletAmount = ref(DEFAULT_RETRO_TOILET_AMOUNT);
 const showDatePicker = ref(false);
 const showTimePicker = ref(false);
 
@@ -125,6 +141,7 @@ function initDefaults() {
   selectedDate.value = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
   selectedTime.value = '12:00';
   currentType.value = 'toilet';
+  toiletAmount.value = DEFAULT_RETRO_TOILET_AMOUNT;
 }
 
 watch(() => props.open, (v) => {
@@ -135,7 +152,8 @@ function onSubmit() {
   const [hh, mm] = (selectedTime.value || '12:00').split(':').map(Number);
   const d = dayjs(selectedDate.value).hour(hh || 0).minute(mm || 0).second(0).millisecond(0);
   if (!d.isValid()) return;
-  addRecordAt(d, currentType.value);
+  const payload = currentType.value === 'toilet' ? { amount: toiletAmount.value } : {};
+  addRecordAt(d, currentType.value, payload);
   emit('update:open', false);
   /* 补录后也检查成就，与「打我」一致 */
   setTimeout(() => {
@@ -175,6 +193,34 @@ function onSubmit() {
 :deep(.retro-punch-type-tabs .van-tab.van-tab--active) {
   background: var(--primary) !important;
   color: #fff !important;
+}
+.retro-punch-amount-section {
+  margin: 16px 0 12px;
+}
+.retro-punch-amount-section .retro-punch-label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.retro-punch-amount-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.retro-punch-amount-button {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--separator);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.retro-punch-amount-button--active {
+  border-color: var(--green);
+  background: rgba(76, 175, 80, 0.12);
+  color: var(--green);
 }
 .retro-punch-submit {
   margin-top: 8px;

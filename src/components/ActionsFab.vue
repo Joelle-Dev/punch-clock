@@ -91,10 +91,11 @@ function exportPunch() {
     showToast('还没打过我，没啥好导出的');
     return;
   }
-  const header = ['类型', '日期时间'];
+  const header = ['类型', '日期时间', '如厕量'];
   const rows = records.value.map((r) => [
     getTypeLabel(r.type),
     `${formatDateDisplay(r.dateKey)} ${formatTime(r.timestamp)}`,
+    r.type === 'toilet' ? (r.amount || '') : '',
   ]);
   const csv = [header, ...rows].map((row) => row.map((c) => `"${c}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

@@ -83,13 +83,14 @@ export function usePunchRecords() {
   if (!recordsRef) recordsRef = ref(loadRecords());
   const records = recordsRef;
 
-  function addRecord(type) {
+  function addRecord(type, payload = {}) {
     const now = dayjs();
     const record = {
       id: `${now.valueOf()}-${Math.random().toString(36).slice(2, 6)}`,
       timestamp: now.valueOf(),
       dateKey: now.format('YYYY-MM-DD'),
       type: type || 'fitness',
+      ...payload,
     };
     records.value.push(record);
     saveRecords(records.value);
@@ -97,13 +98,14 @@ export function usePunchRecords() {
   }
 
   /** 补打卡：在指定时间点添加一条记录 */
-  function addRecordAt(at, type) {
+  function addRecordAt(at, type, payload = {}) {
     const d = dayjs(at);
     const record = {
       id: `${d.valueOf()}-${Math.random().toString(36).slice(2, 6)}`,
       timestamp: d.valueOf(),
       dateKey: d.format('YYYY-MM-DD'),
       type: type || 'fitness',
+      ...payload,
     };
     records.value.push(record);
     records.value.sort((a, b) => a.timestamp - b.timestamp);

@@ -7,7 +7,7 @@ import { ACHIEVEMENT_STORAGE_KEY } from '../constants';
 function allTypesInLast7Days(records) {
   const minKey = dayjs().subtract(6, 'day').format('YYYY-MM-DD');
   const recent = records.filter((r) => r.dateKey >= minKey);
-  return new Set(recent.map((r) => r.type || 'fitness').filter((t) => ['toilet', 'meal', 'fitness'].includes(t))).size >= 3;
+  return new Set(recent.map((r) => r.type || 'fitness')).size >= 3;
 }
 
 /** 单日最多打我次数 */
@@ -38,15 +38,14 @@ const ACHIEVEMENTS = [
   // ---------- 起步（入门） ----------
   { id: 'first', category: 'start', title: '第一次', desc: '打了第一次我～', icon: '🎉', hidden: false, check: (r) => r.length >= 1, getProgress: (r) => ({ current: r.length, target: 1 }) },
   { id: 'streak3', category: 'start', title: '连续 3 天', desc: '从今天起连续 3 天都有记录～', icon: '🌱', hidden: false, check: (r) => calcStreak(r) >= 3, getProgress: (r) => ({ current: calcStreak(r), target: 3 }) },
-  { id: 'all4', category: 'start', title: '一日全能', desc: '同一天打过 3 种类型～', icon: '🌟', hidden: false, check: (r) => groupByDate(r).some(({ recs }) => new Set(recs.map((x) => x.type || 'fitness').filter((t) => ['toilet', 'meal', 'fitness'].includes(t))).size >= 3), getProgress: (r) => (groupByDate(r).some(({ recs }) => new Set(recs.map((x) => x.type || 'fitness').filter((t) => ['toilet', 'meal', 'fitness'].includes(t))).size >= 3) ? { current: 1, target: 1 } : { current: 0, target: 1 }) },
+  { id: 'all4', category: 'start', title: '一日全能', desc: '同一天打过 3 种类型～', icon: '🌟', hidden: false, check: (r) => groupByDate(r).some(({ recs }) => new Set(recs.map((x) => x.type || 'fitness')).size >= 3), getProgress: (r) => (groupByDate(r).some(({ recs }) => new Set(recs.map((x) => x.type || 'fitness')).size >= 3) ? { current: 1, target: 1 } : { current: 0, target: 1 }) },
   // ---------- 连续 ----------
   { id: 'streak7', category: 'streak', title: '连续 7 天', desc: '从今天起连续 7 天都有记录～', icon: '🔥', hidden: false, check: (r) => calcStreak(r) >= 7, getProgress: (r) => ({ current: calcStreak(r), target: 7 }) },
   { id: 'streak14', category: 'streak', title: '连续 14 天', desc: '从今天起连续 14 天都有记录～', icon: '⭐', hidden: false, check: (r) => calcStreak(r) >= 14, getProgress: (r) => ({ current: calcStreak(r), target: 14 }) },
   { id: 'streak30', category: 'streak', title: '连续 30 天', desc: '从今天起连续 30 天都有记录～', icon: '🏆', hidden: false, check: (r) => calcStreak(r) >= 30, getProgress: (r) => ({ current: calcStreak(r), target: 30 }) },
   // ---------- 类型 ----------
   { id: 'toilet30', category: 'type', title: '厕所之光', desc: '如厕打我满 30 次～', icon: '🚽', hidden: false, check: (r) => filterByType(r, 'toilet').length >= 30, getProgress: (r) => ({ current: filterByType(r, 'toilet').length, target: 30 }) },
-  { id: 'meal30', category: 'type', title: '干饭人', desc: '饭否打我满 30 次～', icon: '🍚', hidden: false, check: (r) => filterByType(r, 'meal').length >= 30, getProgress: (r) => ({ current: filterByType(r, 'meal').length, target: 30 }) },
-  { id: 'fitness30', category: 'type', title: '健身小能手', desc: '健身打我满 30 次～', icon: '💪', hidden: false, check: (r) => filterByType(r, 'fitness').length >= 30, getProgress: (r) => ({ current: filterByType(r, 'fitness').length, target: 30 }) },
+  { id: 'fitness30', category: 'type', title: '超慢跑小能手', desc: '超慢跑打我满 30 次～', icon: '💪', hidden: false, check: (r) => filterByType(r, 'fitness').length >= 30, getProgress: (r) => ({ current: filterByType(r, 'fitness').length, target: 30 }) },
   // ---------- 里程碑 ----------
   { id: 'count100', category: 'milestone', title: '第 100 次', desc: '累计打我满 100 次～', icon: '💯', hidden: false, check: (r) => r.length >= 100, getProgress: (r) => ({ current: r.length, target: 100 }) },
   { id: 'count500', category: 'milestone', title: '第 500 次', desc: '累计打我满 500 次～', icon: '🎊', hidden: false, check: (r) => r.length >= 500, getProgress: (r) => ({ current: r.length, target: 500 }) },

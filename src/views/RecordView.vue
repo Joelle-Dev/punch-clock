@@ -23,7 +23,7 @@
         <span class="record-filter-label">类型</span>
         <van-tabs v-model:active="historyType" shrink class="record-tabs record-tabs-type">
           <van-tab name="all" title="全部" />
-          <van-tab v-for="t in typeTabs" :key="'ht-' + t.type" :name="t.type" :title="t.label" />
+          <van-tab v-for="t in typeList" :key="'ht-' + t.type" :name="t.type" :title="t.label" />
         </van-tabs>
       </div>
     </section>
@@ -44,7 +44,12 @@
                 class="record-card"
                 :class="'record-card--' + (r.type || 'other')"
               >
-                <span class="record-card-type">{{ getTypeLabel(r.type || 'other') }}</span>
+                <div class="record-card-main">
+                  <span class="record-card-type">{{ getTypeLabel(r.type || 'other') }}</span>
+                  <span v-if="r.type === 'toilet' && r.amount" class="record-card-amount">
+                    · {{ getAmountLabel(r.amount) }}
+                  </span>
+                </div>
                 <span class="record-card-time">{{ formatTime(r.timestamp) }}</span>
               </div>
               <template #right>
@@ -73,9 +78,10 @@
 import { ref, computed, inject } from 'vue';
 import { showConfirmDialog } from 'vant';
 import { usePunchRecords } from '../composables/usePunchRecords';
+import { usePunchTypes } from '../composables/usePunchTypes';
 import { formatDateDisplay, formatTime } from '../utils/date';
 import { getPrimaryColor } from '../utils/theme';
-import { TYPE_LABELS } from '../constants';
+import { TYPE_LABELS, TOILET_AMOUNT_LABELS } from '../constants';
 
 const openActionsMenu = inject('openActionsMenu', () => {});
 const { records, deleteRecord, applyFilter } = usePunchRecords();
@@ -101,11 +107,7 @@ function beforeCloseSwipe({ position, name }) {
 const filter = ref('all');
 const historyType = ref('all');
 
-const typeTabs = [
-  { type: 'toilet', label: '如厕' },
-  { type: 'meal', label: '饭否' },
-  { type: 'fitness', label: '健身' },
-];
+const { typeList } = usePunchTypes();
 
 const filterTabs = [
   { value: 'all', label: '全部' },
@@ -131,8 +133,14 @@ const dateGroups = computed(() => {
   return Array.from(map.values()).sort((a, b) => (b.dateKey > a.dateKey ? 1 : b.dateKey < a.dateKey ? -1 : 0));
 });
 
+const typeLabels = computed(() => new Map(typeList.value.map((t) => [t.type, t.label])));
+
 function getTypeLabel(type) {
-  return TYPE_LABELS[type] || '其他';
+  return typeLabels.value.get(type) || TYPE_LABELS[type] || '其他';
+}
+
+function getAmountLabel(amount) {
+  return TOILET_AMOUNT_LABELS[amount] || '正常';
 }
 </script>
 
@@ -285,6 +293,15 @@ function getTypeLabel(type) {
   box-shadow: var(--shadow-sm);
   border-left: 4px solid var(--primary);
 }
+.record-card-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.record-card-amount {
+  font-size: 12px;
+  color: var(--text-3);
+}
 .record-swipe-cell :deep(.van-swipe-cell__right) {
   display: flex;
   align-items: stretch;
@@ -294,7 +311,6 @@ function getTypeLabel(type) {
   min-width: 70px;
 }
 .record-card--toilet { border-left-color: var(--green); }
-.record-card--meal { border-left-color: var(--orange); }
 .record-card--fitness { border-left-color: var(--primary); }
 .record-card--other { border-left-color: var(--text-3); }
 .record-card-type {

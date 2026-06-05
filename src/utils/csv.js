@@ -23,7 +23,7 @@ function parseCsvLine(line) {
 }
 
 function getTypeFromLabel(label) {
-  const map = { 如厕: 'toilet', 饭否: 'meal', 健身: 'fitness', 其他: 'other' };
+  const map = { 如厕: 'toilet', 超慢跑: 'fitness', 其他: 'other' };
   return map[label] || 'other';
 }
 
@@ -58,12 +58,17 @@ export function parsePunchCsv(text) {
     const type = getTypeFromLabel(typeLabel);
     const parsed = parseDateTimeDisplay(dateTimeStr);
     if (!parsed) continue;
-    records.push({
+    const amount = cells[2] ? cells[2].trim() : undefined;
+    const record = {
       id: `import-${parsed.timestamp}-${Math.random().toString(36).slice(2, 6)}`,
       timestamp: parsed.timestamp,
       dateKey: parsed.dateKey,
       type,
-    });
+    };
+    if (type === 'toilet' && amount) {
+      record.amount = amount;
+    }
+    records.push(record);
   }
   return records;
 }

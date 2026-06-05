@@ -1,5 +1,4 @@
 export { default as ToiletIcon } from './ToiletIcon.vue';
-export { default as MealIcon } from './MealIcon.vue';
 export { default as FitnessIcon } from './FitnessIcon.vue';
 export { default as OtherIcon } from './OtherIcon.vue';
 export { default as ProfileIcon } from './ProfileIcon.vue';
