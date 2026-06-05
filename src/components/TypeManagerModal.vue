@@ -46,20 +46,6 @@
       clearable
     />
 
-    <div class="type-manager-color-row">
-      <span class="type-manager-color-label">颜色</span>
-      <div class="type-manager-color-palette">
-        <button
-          v-for="color in colors"
-          :key="color"
-          type="button"
-          :style="{ background: color, borderColor: newTint === color ? '#00000033' : 'transparent' }"
-          class="type-manager-color-swatch"
-          @click="newTint = color"
-        />
-      </div>
-    </div>
-
     <van-button type="primary" block round class="type-manager-submit" @click="onAdd">新增类型</van-button>
   </BaseModal>
 </template>
@@ -68,7 +54,6 @@
 import { ref, computed } from 'vue';
 import BaseModal from './BaseModal.vue';
 import { usePunchTypes } from '../composables/usePunchTypes';
-import { TOILET_AMOUNT_LABELS } from '../constants';
 
 const props = defineProps({ open: Boolean });
 const emit = defineEmits(['update:open', 'added']);
@@ -82,8 +67,6 @@ const { typeList, addType, removeType, reorderType } = usePunchTypes();
 
 const newLabel = ref('');
 const newEmoji = ref('✨');
-const colors = ['#7c4dff', '#4caf50', '#ff9800', '#2196f3', '#e91e63', '#009688'];
-const newTint = ref(colors[0]);
 
 function removeCustomType(type) {
   removeType(type);
@@ -98,12 +81,11 @@ function onAdd() {
   if (!label) {
     return;
   }
-  const added = addType({ label, emoji: newEmoji.value || '✨', tint: newTint.value });
+  const added = addType({ label, emoji: newEmoji.value || '✨' });
   if (added) {
     emit('added', added.type);
     newLabel.value = '';
     newEmoji.value = '✨';
-    newTint.value = colors[0];
   }
 }
 </script>
@@ -191,28 +173,6 @@ function onAdd() {
 .type-manager-action {
   cursor: pointer;
   color: var(--danger);
-}
-.type-manager-color-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 14px 0 10px;
-}
-.type-manager-color-label {
-  font-size: 13px;
-  color: var(--text-3);
-}
-.type-manager-color-palette {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.type-manager-color-swatch {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
 }
 .type-manager-submit {
   margin-top: 4px;

@@ -43,9 +43,12 @@
               <div
                 class="record-card"
                 :class="'record-card--' + (r.type || 'other')"
+                :style="getRecordCardStyle(r.type || 'other')"
               >
                 <div class="record-card-main">
-                  <span class="record-card-type">{{ getTypeLabel(r.type || 'other') }}</span>
+                  <span class="record-card-type" :style="getRecordTypeLabelStyle(r.type || 'other')">
+                    {{ getTypeLabel(r.type || 'other') }}
+                  </span>
                   <span v-if="r.type === 'toilet' && r.amount" class="record-card-amount">
                     · {{ getAmountLabel(r.amount) }}
                   </span>
@@ -134,9 +137,24 @@ const dateGroups = computed(() => {
 });
 
 const typeLabels = computed(() => new Map(typeList.value.map((t) => [t.type, t.label])));
+const typeTintMap = computed(() => new Map(typeList.value.map((t) => [t.type, t.tint])));
 
 function getTypeLabel(type) {
   return typeLabels.value.get(type) || TYPE_LABELS[type] || '其他';
+}
+
+function getTypeTint(type) {
+  return typeTintMap.value.get(type) || '';
+}
+
+function getRecordCardStyle(type) {
+  const tint = getTypeTint(type);
+  return tint ? { borderLeftColor: tint } : {};
+}
+
+function getRecordTypeLabelStyle(type) {
+  const tint = getTypeTint(type);
+  return tint ? { color: tint, borderColor: tint } : {};
 }
 
 function getAmountLabel(amount) {
@@ -314,6 +332,12 @@ function getAmountLabel(amount) {
 .record-card--fitness { border-left-color: var(--primary); }
 .record-card--other { border-left-color: var(--text-3); }
 .record-card-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
   font-size: 13px;
   font-weight: 500;
   color: var(--text);

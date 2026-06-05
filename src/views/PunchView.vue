@@ -32,7 +32,12 @@
         </button>
         <div class="type-tabs-scroll" ref="typeTabsScrollRef">
           <van-tabs :key="typeListKey" v-model:active="currentType" shrink>
-            <van-tab v-for="t in typeList" :key="t.type" :name="t.type">
+            <van-tab
+              v-for="t in typeList"
+              :key="t.type"
+              :name="t.type"
+              :style="getTypeTabStyle(t)"
+            >
               <template #title>
                 <span class="type-tab-title">
                   <span v-if="t.custom" class="type-tab-emoji">{{ t.emoji || '✨' }}</span>
@@ -69,6 +74,7 @@
           size="large"
           class="punch-button"
           :class="punchButtonClasses"
+          :style="punchButtonStyle"
           :aria-label="punchButtonAriaLabel"
           @click="onPunch"
         >
@@ -443,6 +449,23 @@ function onPunch() {
 function getTypeIconSize(type) {
   return 24;
 }
+
+function getTypeTabStyle(typeEntry) {
+  if (!typeEntry.custom || !typeEntry.tint) return {};
+  return {
+    background: typeEntry.tint,
+    color: '#fff',
+    borderColor: typeEntry.tint,
+  };
+}
+
+const punchButtonStyle = computed(() => {
+  if (!currentTypeTab.value?.tint) return {};
+  const tint = currentTypeTab.value.tint;
+  return {
+    boxShadow: `0 10px 28px ${tint}33, 0 4px 14px ${tint}4d`,
+  };
+});
 
 function getHeatmapLevel(count) {
   const level = HEATMAP_LEVELS.find((l) => count >= l.threshold);
